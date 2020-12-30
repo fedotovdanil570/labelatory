@@ -4,6 +4,8 @@
 
 Labelatory is a web application for synchronization of labels among repositories stored on diffenrent git services.
 
+This project is a semestral project for course NI-PYT on CTU in Prague.
+
 ## Requirements
 
 ### Core functionality

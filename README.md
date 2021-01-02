@@ -30,31 +30,48 @@ Adding support for a new service is provided with implementing the interface for
 User can save his customized preferences to configuration file.
 
 ### Configuration file example
-Labels settings are stored in configuration files. The example of such a file is below:
+Credentials cofiguration file is stored locally and contains data for accessing the services and defines, where the label configuration file is stored. 
 
+Credentials cofiguration file example:
 ```
+[config]
+type = <type>
+repo = github_username/github_config_repo
+secret = <GITHUB_WEBHOOK_SECRET>
+
 [service:github]
 token = <GITHUB_TOKEN>
 secret = <GITHUB_WEBHOOK_SECRET>
 
-[repo:github]
-username/repo_1 = true
-username/repo_2 = false
-
 [service:gitlab]
 token = <GITLAB_TOKEN>
 secret = <GITLAB_WEBHOOK_SECRET>
+```
+
+* config - defines, where the label configuration file is stored.
+  - type (required) - can be "local" or "remote"
+  - repo (required for "remote" type) - defines a repo on github, where the label configuration file is stored.
+  - secret (required for "remote" type) - defines a webhook secret for repo.
+* service.<service_name> (e.g. service.github) - contains "token" for communication with API of the service and "secret" for work with webhooks.
+  - token - access token.
+  - secret - defines a webhook secret for repo.
+
+
+Labels settings are stored in configuration files. The example of such a file is below:
+```
+[repo:github]
+github_username/github_repo_1 = true
+github_username/github_repo_2 = false
 
 [repo:gitlab]
-username/repo_1 = true
-username/repo_2 = false
+gitlab_username/gitlab_repo_1 = true
+gitlab_username/gitlab_repo_2 = false
 
 [label:bug]
 color = #123456
 description = Indicates an unexpected problem or unintended behavior
 ```
 
-* service.<service_name> (e.g. service.github) - contains "token" for communication with API of the service and "secret" for work with webhooks.
 * repo.<service_name> (e.g. repo.github) - contains repositories on the service to be controlled.
   - "username/repo" can be either "true" or "false" - manages whether repository must be under control or not.
 * label.<label_name> - describes features of given label name.

@@ -35,7 +35,7 @@ Credentials cofiguration file is stored locally and contains data for accessing 
 Credentials cofiguration file example:
 ```
 [config]
-type = <type>
+type = <TYPE>
 repo = github_username/github_config_repo
 secret = <GITHUB_WEBHOOK_SECRET>
 
@@ -44,7 +44,7 @@ token = <GITHUB_TOKEN>
 secret = <GITHUB_WEBHOOK_SECRET>
 
 [service:gitlab]
-host = <host>
+host = <HOST>
 token = <GITLAB_TOKEN>
 secret = <GITLAB_WEBHOOK_SECRET>
 ```

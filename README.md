@@ -44,6 +44,7 @@ token = <GITHUB_TOKEN>
 secret = <GITHUB_WEBHOOK_SECRET>
 
 [service:gitlab]
+host = <host>
 token = <GITLAB_TOKEN>
 secret = <GITLAB_WEBHOOK_SECRET>
 ```
@@ -55,6 +56,8 @@ secret = <GITLAB_WEBHOOK_SECRET>
 * service.<service_name> (e.g. service.github) - contains "token" for communication with API of the service and "secret" for work with webhooks.
   - token - access token.
   - secret - defines a webhook secret for repo.
+  - host (optional) - defines the instance for gitlab case (ex. "gitlab.company.com"). If host key is not defined, the default "gitlab.com" is used.
+
 
 
 Labels settings are stored in configuration files. The example of such a file is below:

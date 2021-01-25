@@ -1,0 +1,11 @@
+[repo:github]
+github_username/github_repo_1 = true
+github_username/github_repo_2 = false
+
+[repo:gitlab]
+gitlab_username/gitlab_repo_1 = true
+gitlab_username/gitlab_repo_2 = false
+
+[label:bug]
+color = #123456
+description = Indicates an unexpected problem or unintended behavior

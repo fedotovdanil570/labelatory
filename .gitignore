@@ -1,0 +1,5 @@
+__venv__
+__pycache__
+.vscode
+credentials_conf.cfg
+labels_conf.cfg

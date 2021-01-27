@@ -1,8 +1,9 @@
-from abc import ABCMeta, abstractmethod
 import json
 import requests
 import aiohttp
 
+from label import Label
+from abc import ABCMeta, abstractmethod
 
 class DefaultConnector(metaclass=ABCMeta):
     def __init__(self, token=None, session=None):
@@ -21,7 +22,7 @@ class DefaultConnector(metaclass=ABCMeta):
         raise NotImplementedError('Too generic. Use a subclass for getting labels.')
     
     @abstractmethod
-    def get_label(self, reposlug, label):
+    def get_label(self, reposlug, label_name):
         """ Retrieve label with specified name from repository. """
         raise NotImplementedError('Too generic. Use a subclass for getting label.')
 
@@ -60,65 +61,65 @@ class GitHubConnector(DefaultConnector):
             'Authorization': f'token {self.token}'
         }
         resp = requests.get(URL, headers=headers, params=payload)
+        if resp.status_code != 200:
+            raise Exception(resp.text)
         page = resp.json()
         if not resp.links.get('next'):
-            return (resp.status_code, page)
+            return [Label(label['name'], label['color'], label['description']) for label in page]
         
         # If there are more pages, get them in ansynchronous manner
         while resp.links.get('next'):
             URL = resp.links['next']['url']
             async with self.session.get(URL) as resp:
+                if resp.status != 200:
+                    raise Exception(resp.message)
                 page_content = await resp.json()
                 page.extend(page_content)
 
-        return (resp.status, page)
+        return [Label(label['name'], label['color'], label['description']) for label in page]# (resp.status, page)
 
-    async def get_label(self, reposlug, label):
+    async def get_label(self, reposlug, label_name):
         user, repo = reposlug.split('/')
-        URL = f'https://api.github.com/repos/{user}/{repo}/labels/{label.name}'
+        URL = f'https://api.github.com/repos/{user}/{repo}/labels/{label_name}'
 
         async with self.session.get(URL) as resp:
-            status = resp.status
-            label = await resp.json()
-        return (status, label)
+            if resp.status != 200:
+                raise Exception(resp.message)
+            resp_label = await resp.json()
+        return Label(
+            resp_label['name'], 
+            resp_label['color'], 
+            resp_label['description']
+        )
 
     async def create_label(self, reposlug, label):
         user, repo = reposlug.split('/')
         URL = f'https://api.github.com/repos/{user}/{repo}/labels'
-
 
         data = {
             'name': label.name, 
             'color':label.color[1:], 
             'description':label.description
         }
-        # headers = {
-        #     'User-Agent': 'Labelatory',
-        #     'Authorization': f'token {self.token}'
-        # }
-        # resp = requests.post(URL, headers=headers, json=data)
-
-        # return (resp.status_code, resp.json())
 
         async with self.session.post(URL, json=data) as resp:
-            resp_status = resp.status
+            if resp.status != 201:
+                raise Exception(resp.message)
             resp_result = await resp.json()
-        return (resp_status, resp_result)
+
+        return Label(
+            resp_result['name'], 
+            resp_result['color'], 
+            resp_result['description']
+        )
 
     async def remove_label(self, reposlug, label):
         user, repo = reposlug.split('/')
         URL = f'https://api.github.com/repos/{user}/{repo}/labels/{label.name}'
 
-        # headers = {
-        #             'User-Agent': 'Labelatory',
-        #             'Authorization': f'token {self.token}'
-        # }
-        # resp = requests.delete(URL, headers=headers)
-        # return resp.status_code
-
         async with self.session.delete(URL) as resp:
-            resp_status = resp.status
-        return resp_status
+            if resp.status != 204:
+                raise Exception(resp.reason)
 
     async def update_label(self, reposlug, label):
         user, repo = reposlug.split('/')
@@ -130,22 +131,12 @@ class GitHubConnector(DefaultConnector):
             'description': label.description
         }
 
-        # headers = {
-        #     'User-Agent': 'Labelatory',
-        #     'Authorization': f'token {self.token}'
-        # }
-
-        # resp = requests.patch(URL, headers=headers, json=data)
-        # if resp.status_code == 200:
-        #     label._old_name = label.name
-        # return (resp.status_code, resp.json())
-
         async with self.session.patch(URL, json=data) as resp:
-            resp_status = resp.status
+            if resp.status != 200:
+                raise Exception(resp.message)
             resp_result = await resp.json()
-            if resp_status == 200:
-                label._old_name = label.name
-        return (resp_status, resp_result)
+            label._old_name = label.name
+        return label
         
 
     
@@ -170,63 +161,61 @@ class GitLabConnector(DefaultConnector):
         resp = requests.get(URL, headers=headers, params=payload)
         page = resp.json()
         if not resp.links.get('next'):
-            return (resp.status_code, page)
+            return [Label(label['name'], label['color'], label['description']) for label in page]
         
         # If there are more pages, get them in ansynchronous manner
         while resp.links.get('next'):
             URL = resp.links['next']['url']
             async with self.session.get(URL) as resp:
+                if resp.status != 200:
+                    raise Exception(resp.message)
                 page_content = await resp.json()
                 page.extend(page_content)
 
-        return (resp.status, page)
+        return [Label(label['name'], label['color'], label['description']) for label in page]
 
-    async def get_label(self, reposlug, label):
+    async def get_label(self, reposlug, label_name):
         reposlug = reposlug.replace('/', '%2F')
-        URL = f'https://{self.host}/api/v4/projects/{reposlug}/labels/{label.name}'
+        URL = f'https://{self.host}/api/v4/projects/{reposlug}/labels/{label_name}'
 
         async with self.session.get(URL) as resp:
-            status = resp.status
-            label = await resp.json()
-        return (status, label)
+            if resp.status != 200:
+                raise Exception(resp.message)
+            resp_label = await resp.json()
+        return Label(
+            resp_label['name'], 
+            resp_label['color'], 
+            resp_label['description']
+        )
 
     async def create_label(self, reposlug, label):
         reposlug = reposlug.replace('/', '%2F')
         URL = f'https://{self.host}/api/v4/projects/{reposlug}/labels'
-
 
         data = {
             'name': label.name, 
             'color':label.color, 
             'description':label.description
         }
-        # headers = {
-        #     'User-Agent': 'Labelatory',
-        #     'Authorization': f'token {self.token}'
-        # }
-        # resp = requests.post(URL, headers=headers, json=data)
-
-        # return (resp.status_code, resp.json())
 
         async with self.session.post(URL, json=data) as resp:
-            resp_status = resp.status
+            if resp.status != 201:
+                raise Exception(resp.message)
             resp_result = await resp.json()
-        return (resp_status, resp_result)
+
+        return Label(
+            resp_result['name'], 
+            resp_result['color'], 
+            resp_result['description']
+        )
 
     async def remove_label(self, reposlug, label):
         reposlug = reposlug.replace('/', '%2F')
         URL = f'https://{self.host}/api/v4/projects/{reposlug}/labels/{label.name}'
 
-        # headers = {
-        #             'User-Agent': 'Labelatory',
-        #             'Authorization': f'token {self.token}'
-        # }
-        # resp = requests.delete(URL, headers=headers)
-        # return resp.status_code
-
         async with self.session.delete(URL) as resp:
-            resp_status = resp.status
-        return resp_status
+            if resp.status != 204:
+                raise Exception(resp.reason)
 
     async def update_label(self, reposlug, label):
         reposlug = reposlug.replace('/', '%2F')
@@ -238,22 +227,12 @@ class GitLabConnector(DefaultConnector):
             'description': label.description
         }
 
-        # headers = {
-        #     'User-Agent': 'Labelatory',
-        #     'Authorization': f'token {self.token}'
-        # }
-
-        # resp = requests.patch(URL, headers=headers, json=data)
-        # if resp.status_code == 200:
-        #     label._old_name = label.name
-        # return (resp.status_code, resp.json())
-
         async with self.session.patch(URL, json=data) as resp:
-            resp_status = resp.status
+            if resp.status != 200:
+                raise Exception(resp.message)
             resp_result = await resp.json()
-            if resp_status == 200:
-                label._old_name = label.name
-        return (resp_status, resp_result)
+            label._old_name = label.name
+        return label
 
     
 

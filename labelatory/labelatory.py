@@ -6,6 +6,7 @@ import asyncio
 import requests
 import base64
 
+from label import Label
 from connector import GitHubConnector, GitLabConnector
 
 
@@ -44,20 +45,19 @@ class LabelatoryConfig():
         self.labels_rules = labels_rules
         self.source_secrete = source_secret
 
-class Label():
-    def __init__(self, name, color, description):
-        self.name = name
-        self._old_name = name
-        self.color = color
-        self.description = description
 
-    @classmethod
-    def load(cls, cfg_labels):
-        pass
+class Violation():
+    """ Holds the violation. Can be color, description or name """
+    def __init__(self, type, label, found=None, required=None):
+        self.label = label
+        self.type = type
+        self.required = required
+        self.found = found
 
 class CheckResult():
-    def __init__(self, label_name, violations):
-        self.label_name = label_name
+    def __init__(self, reposlug, violations):
+        self.reposlug = reposlug
+        # self.label = label
         self.violations = violations
 
 class Service():
@@ -66,9 +66,103 @@ class Service():
         self.secret = secret
         self.repos = repos
         
-    def check(self, labels_rules):
-        """ Checks whether all enabled repos of the service correctly defines labels. """
-        raise NotImplementedError('Too generic. Use a subclass for check.')
+    # def check(self, labels_rules):
+    #     """ Checks whether all enabled repos of the service correctly defines labels. """
+    #     raise NotImplementedError('Too generic. Use a subclass for check.')
+    
+    def check_label(self, reposlug, label=None, label_name=None):
+        """ Checks single label. If only name is provided, gets the label from the service. """
+        pass
+
+    async def check_all(self, labels_rules):
+        async with aiohttp.ClientSession(headers=self._headers) as session:
+            self.connector.session = session
+
+            results = {}
+            # results = []
+
+            for reposlug, enabled in self.repos.items():
+                if enabled:
+                    labels_rules_copy = labels_rules.copy()
+                    # status, labels = await self.connector.get_labels(reposlug)
+                    labels = await self.connector.get_labels(reposlug)
+                    # if status != 200:
+                    #     raise Exception('Can\'t connect!')
+
+                    # Loop on every label in current repository
+                    violations = []
+                    for label in labels:
+                        # name = label['name']
+                        label_name = label.name
+                        label_rule = labels_rules_copy.get(label_name)# labels_rules.get(name)
+
+                        if label_rule:
+                            # Get parameters of retrieved label
+                            label_color = label.color# label['color']
+                            label_description = label.description# label['description']
+                            if label_color[0] == '#':
+                                label_color = label_color[1:]
+                            
+                            # Check label parameters
+                            if label_color != label_rule.color[1:]:
+                                # color = label['color']
+                                right_color = label_rule.color
+                                # violations.append(f'Wrong label color in repository \'{reposlug}\' in label \'{label_name}\'. Must be \'{right_color}\', found \'{label_color}\'.')
+                                violations.append(Violation('color', label, label_color, right_color))
+                                # raise Exception(f'Wrong label color in repository {reposlug} in label {name}. Must be {right_color}, found {color}.')
+                            
+                            if label_description != label_rule.description:
+                                # description = label['description']
+                                right_description = label_rule.description
+                                # violations.append(f'Wrong label description in repository \'{reposlug}\' in label \'{label_name}\'. Must be \'{right_description}\', found \'{label_description}\'.')
+                                violations.append(Violation('description', label, label_description, right_description))
+                                # raise Exception(f'Wrong label description in repository {reposlug} in label {name}. Must be {right_description}, found {description}.')
+                            
+                            # Remove checked label from rules for this reposlug
+                            labels_rules_copy.pop(label_name)
+                        else:
+                            # violations.append(f'Wrong label in repository \'{reposlug}\'. Label with name \'{label_name}\' is not defined.')
+                            violations.append(Violation('extra', label, label_name))
+                        
+                    # Include missing labels
+                    violations.extend([Violation('missing', label, required=label.name) for label in labels_rules_copy.values()])
+                    
+                    # Update results for this service
+                    results.update({reposlug: violations})
+            return results
+
+    async def fix_violation(self, labels_rules, reposlug, violation):
+        async with aiohttp.ClientSession(headers=self._headers) as session:
+            self.connector.session = session
+            if violation.type == 'color':
+                # Update label with right color
+                correct_label = labels_rules.get(violation.label.name)
+                violation.label.color = correct_label.color
+                await self.connector.update_label(reposlug, violation.label)
+            elif violation.type == 'description':
+                # Update label with right description
+                correct_label = labels_rules.get(violation.label.name)
+                violation.label.description = correct_label.description
+                await self.connector.update_label(reposlug, violation.label)
+            elif violation.type == 'extra':
+                # Delete extra label
+                await self.connector.remove_label(reposlug, violation.label)
+            elif violation.type == 'missing':
+                # Create missing label
+                await self.connector.create_label(reposlug, violation.label)
+        return True
+
+    async def fix_all(self, labels_rules, checked_repos):
+        results = {}
+        for reposlug, violations in checked_repos.items():
+            solved = []
+            results[reposlug]= solved
+            for violation in violations:
+                solved.append(await self.fix_violation(labels_rules, reposlug, violation))
+            results[reposlug].extend(solved)
+        return results
+
+        
 
 class GitHubService(Service):
     def __init__(self, token, secret, repos, connector=None):
@@ -80,45 +174,8 @@ class GitHubService(Service):
         # self.repos = repos
         self._headers = {
             'User-Agent': 'Labelatory',
-            'PRIVATE-TOKEN': f'{self.token}'
+            'Authorization': f'token {self.token}'
         }
-
-    async def check(self, labels_rules):
-        async with aiohttp.ClientSession(headers=self._headers) as session:
-            self.connector.session = session
-
-            results = {}
-
-            for reposlug, enabled in self.repos.items():
-                if enabled:
-                    status, labels = await self.connector.get_labels(reposlug)
-                    if status != 200:
-                        raise Exception('Can\'t connect!')
-
-                    checked_labels = {}
-                    # Loop on every label in current repository
-                    for label in labels:
-                        violations = []
-                        name = label['name']
-                        label_rule = labels_rules.get(name)
-                        if label_rule:
-                            # Check label parameters. Raise an exception if wrong
-                            if label['color'] != label_rule.color[1:]:
-                                color = label['color']
-                                right_color = label_rule.color
-                                violations.append(f'Wrong label color in repository \'{reposlug}\' in label \'{name}\'. Must be \'{right_color}\', found \'{color}\'.')
-                                # raise Exception(f'Wrong label color in repository {reposlug} in label {name}. Must be {right_color}, found {color}.')
-                            if label['description'] != label_rule.description:
-                                description = label['description']
-                                right_description = label_rule.description
-                                violations.append(f'Wrong label description in repository \'{reposlug}\' in label \'{name}\'. Must be \'{right_description}\', found \'{description}\'.')
-                                # raise Exception(f'Wrong label description in repository {reposlug} in label {name}. Must be {right_description}, found {description}.')
-                        else:
-                            violations.append(f'Wrong label in repository \'{reposlug}\'. Label with name \'{name}\' is not defined.')
-                        checked_labels.update({name: violations})
-                    # print(f'Repo {reposlug} is OK :)')
-                    results.update({reposlug: checked_labels})
-            return results
 
     @classmethod
     def load(cls, cfg, token, secret, repos):
@@ -141,48 +198,11 @@ class GitLabService(Service):
             self.connector = GitLabConnector(host, token)
         else:
             self.connector = connector
-
+        
         self._headers = {
             'User-Agent': 'Labelatory',
-            'Authorization': f'token {self.token}'
+            'PRIVATE-TOKEN': f'{self.token}'
         }
-    
-    async def check(self, labels_rules):
-        async with aiohttp.ClientSession(headers=self._headers) as session:
-            self.connector.session = session
-
-            results = {}
-
-            for reposlug, enabled in self.repos.items():
-                if enabled:
-                    status, labels = await self.connector.get_labels(reposlug)
-                    if status != 200:
-                        raise Exception(f'Can\'t connect! {status}')
-
-                    checked_labels = {}
-                    # Loop on every label in current repository
-                    for label in labels:
-                        violations = []
-                        name = label['name']
-                        label_rule = labels_rules.get(name)
-                        if label_rule:
-                            # Check label parameters. Raise an exception if wrong
-                            if label['color'] != label_rule.color:
-                                color = label['color']
-                                right_color = label_rule.color
-                                violations.append(f'Wrong label color in repository \'{reposlug}\' in label \'{name}\'. Must be \'{right_color}\', found \'{color}\'.')
-                                # raise Exception(f'Wrong label color in repository {reposlug} in label {name}. Must be {right_color}, found {color}.')
-                            if label['description'] != label_rule.description:
-                                description = label['description']
-                                right_description = label_rule.description
-                                violations.append(f'Wrong label description in repository \'{reposlug}\' in label \'{name}\'. Must be \'{right_description}\', found \'{description}\'.')
-                                # raise Exception(f'Wrong label description in repository {reposlug} in label {name}. Must be {right_description}, found {description}.')
-                        else:
-                            violations.append(f'Wrong label in repository \'{reposlug}\'. Label with name \'{name}\' is not defined.')
-                        checked_labels.update({name: violations})
-                    # print(f'Repo {reposlug} is OK :)')
-                    results.update({reposlug: checked_labels})
-            return results
 
     @classmethod
     def load(cls, cfg, token, secret, repos):
@@ -342,7 +362,14 @@ if __name__ == "__main__":
     async def _solve_tasks():
         tasks = []
         for service in services:
-            task = asyncio.ensure_future(service.check(config.labels_rules))
+            task = asyncio.ensure_future(service.check_all(config.labels_rules))
+            tasks.append(task)
+
+        result = await asyncio.gather(return_exceptions=True, *tasks)
+
+        tasks = []
+        for service in services:
+            task = asyncio.ensure_future(service.fix_all(config.labels_rules, result[0]))
             tasks.append(task)
 
         result = await asyncio.gather(return_exceptions=True, *tasks)

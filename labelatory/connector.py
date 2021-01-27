@@ -2,7 +2,7 @@ import json
 import requests
 import aiohttp
 
-from label import Label
+from .label import Label
 from abc import ABCMeta, abstractmethod
 
 class DefaultConnector(metaclass=ABCMeta):

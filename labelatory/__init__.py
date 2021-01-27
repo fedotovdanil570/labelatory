@@ -1,3 +1,3 @@
-from .debug import test_func
+from .labelatory import create_app
 
-__all__ = ['test_func']
+__all__ = ['create_app']

@@ -1,3 +1,4 @@
+import os
 import pathlib
 import configparser
 import distutils.util
@@ -6,9 +7,10 @@ import asyncio
 import requests
 import base64
 
-from label import Label
-from connector import GitHubConnector, GitLabConnector
+from .label import Label
+from .connector import GitHubConnector, GitLabConnector
 
+from flask import Flask, url_for, render_template, request, abort
 
 USER = 'fedotovdanil570'
 REPO = 'committee-web-test'
@@ -61,7 +63,8 @@ class CheckResult():
         self.violations = violations
 
 class Service():
-    def __init__(self, token, secret, repos):
+    def __init__(self, name, token, secret, repos):
+        self.name = name
         self.token = token
         self.secret = secret
         self.repos = repos
@@ -165,8 +168,8 @@ class Service():
         
 
 class GitHubService(Service):
-    def __init__(self, token, secret, repos, connector=None):
-        super().__init__(token, secret, repos)
+    def __init__(self, name, token, secret, repos, connector=None):
+        super().__init__(name, token, secret, repos)
         if not connector:
             self.connector = GitHubConnector(token)
         else:
@@ -178,16 +181,17 @@ class GitHubService(Service):
         }
 
     @classmethod
-    def load(cls, cfg, token, secret, repos):
+    def load(cls, cfg, name, token, secret, repos):
         return GitHubService(
+            name,
             token,
             secret,
             repos
         )
 
 class GitLabService(Service):
-    def __init__(self, token, secret, repos, host=None, connector=None):
-        super().__init__(token, secret, repos)
+    def __init__(self, name, token, secret, repos, host=None, connector=None):
+        super().__init__(name, token, secret, repos)
         
         if not host:
             self.host = 'gitlab.com'
@@ -205,9 +209,10 @@ class GitLabService(Service):
         }
 
     @classmethod
-    def load(cls, cfg, token, secret, repos):
+    def load(cls, cfg, name, token, secret, repos):
         host = cfg.get('service:gitlab', 'host')
         return GitLabService(
+            name,
             token,
             secret,
             repos,
@@ -249,7 +254,7 @@ class ConfigLoader():
             repo = validate_reposlug(repo)
             service_repos[repo] = bool(distutils.util.strtobool(status))
         # service_repos = {repo:bool(distutils.util.strtobool(enabled)) for repo, enabled in cfg_labels['repo:'+service_name].items()}#(s for s in cfg_labels.sections() if s.startswith('repo:'+service_name))
-        service = cls.SUPPORTED_SERVICES[service_name].load(cfg, service_token, service_secret, service_repos)
+        service = cls.SUPPORTED_SERVICES[service_name].load(cfg, service_name, service_token, service_secret, service_repos)
         return service
 
     @classmethod
@@ -339,44 +344,76 @@ def load_app(path):
         return ConfigLoader.load(cfg)
     except Exception as e:
         print(e)
+        exit(1)
 
+ENVVAR_CONFIG = 'LABELATORY_CONFIG'
+def load_web(app):
+    if ENVVAR_CONFIG not in os.environ:
+        app.logger.critical(f'Config not supplied by envvar {ENVVAR_CONFIG}')
+        exit(1)
+    config_file_path = os.environ[ENVVAR_CONFIG]
+    return load_app(config_file_path)
 
 def main():
     print('Hello!')
 
-if __name__ == "__main__":
-    services, config = load_app('credentials_conf.cfg')
-    # github = services.services[0]
-    # repos = github.repos
-    # label = Label('my_test_label', '#ffbf00', 'This is my first test label')
-    # for repo, enabled in repos.items():
-    #     if enabled:
-    #         github.connector.get_labels(repo)
-    #         _, j = github.connector.create_label(repo,  label)
+def create_app(config=None):
+    app = Flask(__name__)
+    
+    app.logger.info('Loading Labelatory configuration...')
+    services, cfg = load_web(app)
+    app.config['cfg'] = cfg
+    app.config['services'] = services
+
+    @app.route('/', methods=['GET'])
+    def index():
+        return render_template(
+            'index.html',
+            cfg=app.config['cfg'],
+            services=services
+        )
+
+    @app.route('/labels', methods=['POST'])
+    def webhook():
+        if request.headers.get("X-Hub-Signature"):
+            print(request.headers.get("X-Hub-Signature"))
+
+    return app
+
+
+# if __name__ == "__main__":
+#     services, config = load_app('credentials_conf.cfg')
+#     # github = services.services[0]
+#     # repos = github.repos
+#     # label = Label('my_test_label', '#ffbf00', 'This is my first test label')
+#     # for repo, enabled in repos.items():
+#     #     if enabled:
+#     #         github.connector.get_labels(repo)
+#     #         _, j = github.connector.create_label(repo,  label)
             
-    #         label.name = 'changed_name'
-    #         label.description = 'Changed description.'
-    #         s, j = github.connector.update_label(repo, label)
-    #         # s, j = github.connector.remove_label(repo, label)
-    # print(s, j)
-    async def _solve_tasks():
-        tasks = []
-        for service in services:
-            task = asyncio.ensure_future(service.check_all(config.labels_rules))
-            tasks.append(task)
+#     #         label.name = 'changed_name'
+#     #         label.description = 'Changed description.'
+#     #         s, j = github.connector.update_label(repo, label)
+#     #         # s, j = github.connector.remove_label(repo, label)
+#     # print(s, j)
+#     async def _solve_tasks():
+#         tasks = []
+#         for service in services:
+#             task = asyncio.ensure_future(service.check_all(config.labels_rules))
+#             tasks.append(task)
 
-        result = await asyncio.gather(return_exceptions=True, *tasks)
+#         result = await asyncio.gather(return_exceptions=True, *tasks)
 
-        tasks = []
-        for service in services:
-            task = asyncio.ensure_future(service.fix_all(config.labels_rules, result[0]))
-            tasks.append(task)
+#         tasks = []
+#         for service in services:
+#             task = asyncio.ensure_future(service.fix_all(config.labels_rules, result[0]))
+#             tasks.append(task)
 
-        result = await asyncio.gather(return_exceptions=True, *tasks)
-        from pprint import pprint
-        pprint(result)
+#         result = await asyncio.gather(return_exceptions=True, *tasks)
+#         from pprint import pprint
+#         pprint(result)
 
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(_solve_tasks())
-    loop.close()
+#     loop = asyncio.get_event_loop()
+#     loop.run_until_complete(_solve_tasks())
+#     loop.close()

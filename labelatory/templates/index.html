@@ -1,0 +1,66 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-6">
+                <div id='services'>
+                <div class="col">
+                    <h3>Services</h3>
+
+                    <button id="check-btn" type="button" class="btn btn-secondary">Check</button>
+                    <button id="fix-btn" type="button" class="btn btn-secondary">Fix</button>
+                </div>
+                <ul>
+                    {% for service in services %}
+                        <li>
+                            <strong>{{ service.name }}</strong>
+                            <table class="table table-hover table-bordered">
+                                {% for reposlug, enabeld in service.repos.items() %}
+                                    {% if enabeld == True %}
+
+                                        <tr class="d-flex">
+                                            <td class="col-sm-9"><strong>{{ reposlug }}</strong></td>
+                                            <td class="col-sm-3"><span style="color: green;">ENABLED</span></td>
+                                        </tr>
+
+                                    {% else %}
+
+                                        <tr class="d-flex">
+                                            <td class="col-sm-9"><strong>{{ reposlug }}</strong></td>
+                                            <td class="col-sm-3"><span style="color: red;">DISABLED</span></td>
+
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </table>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <div class="col-6">
+            <div id="labels">
+                <div class="col">
+                    <h3>Labels</h3>
+                    <button id="add-label-btn" type="button" class="btn btn-success">Add</button>
+                </div>
+                <ul>
+                    {% for label_name, label in cfg.labels_rules.items() %}
+                        <li>
+                            <strong>{{ label_name }}</strong>
+                            <ul>
+                                <li>
+                                    <div class="colorbox" style="background-color: {{ label.color }};"></div>
+                                    <span>&nbsp;{{ label.color }}</span>
+                                </li>
+                                <li>
+                                    <span>{{ label.description }}</span>
+                                </li>
+                            </ul>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -22,8 +22,8 @@
                                             <td class="col-sm-7"><strong>{{ reposlug }}</strong></td>
                                             <td class="col-sm-3"><span style="color: green;">ENABLED</span></td>
                                             <td class="col-sm-2">
-                                                <button type="button" class="btn btn-sm btn-light" onclick="switchState('{{ enabled }}')">
-                                                    Enable
+                                                <button type="button" class="btn btn-sm btn-light" onclick="switchState('{{ service.name }}', '{{ reposlug }}', '{{ enabled }}')">
+                                                    Switch
                                                 </button>
                                             </td>
                                         </tr>
@@ -34,8 +34,8 @@
                                             <td class="col-sm-7"><strong>{{ reposlug }}</strong></td>
                                             <td class="col-sm-3"><span style="color: red;">DISABLED</span></td>
                                             <td class="col-sm-2">
-                                                <button type="button" class="btn btn-sm btn-light" onclick="switchState('{{ enabled }}')">
-                                                    Enable
+                                                <button type="button" class="btn btn-sm btn-light" onclick="switchState('{{ service.name }}', '{{ reposlug }}', '{{ enabled }}')">
+                                                    Switch
                                                 </button>
                                             </td>
                                         </tr>

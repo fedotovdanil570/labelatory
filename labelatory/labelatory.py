@@ -368,13 +368,23 @@ def create_app(config=None):
     app.config['cfg'] = cfg
     app.config['services'] = services
 
-    @app.route('/', methods=['GET'])
+    @app.route('/', methods=['GET', 'POST'])
     def index():
-        return render_template(
-            'index.html',
-            cfg=app.config['cfg'],
-            services=services
-        )
+        if request.method == 'POST':
+            # Do some things
+            data = request.json
+            
+            services_ = app.config['services']
+            for service in services_:
+                if service.name == data['service']:
+                    service.repos[data['reposlug']] = bool(distutils.util.strtobool(data['enabled']))
+            return redirect(url_for('/'))
+        else:
+            return render_template(
+                'index.html',
+                cfg=app.config['cfg'],
+                services=services
+            )
 
     @app.route('/add', methods=['GET', 'POST'])
     def add_label():
@@ -386,7 +396,7 @@ def create_app(config=None):
                 data['color'],
                 data['description']
             )
-            print(new_label)
+            # print(new_label)
             if not app.config['cfg'].labels_rules.get(new_label.name):
                 app.config['cfg'].labels_rules.update({new_label.name: new_label})
             else:
@@ -396,7 +406,7 @@ def create_app(config=None):
                     mimetype='application/json'
                 )
                 return response# jsonify({"error": "Such a label already defined."})
-            print(url_for('index'))
+            # print(url_for('index'))
             return redirect(url_for('index'))
         else:    
             return render_template(

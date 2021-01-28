@@ -103,7 +103,7 @@ function editLabel(link){
 
 }
 
-function switchState(enabled){
+function switchState(service, reposlug, enabled){
     if (enabled == 'True'){
         enabled = 'False'
     }else{
@@ -113,6 +113,8 @@ function switchState(enabled){
     var xhr = new XMLHttpRequest()
 
     var data = JSON.stringify({
+        service:service,
+        reposlug:reposlug,
         enabled:enabled
     })
 

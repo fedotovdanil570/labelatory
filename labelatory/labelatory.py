@@ -426,12 +426,13 @@ def create_app(config=None):
         if request.method == 'PUT':
             # Do some things
             data = request.json
+            old_name = data['oldName']
             edited_label = Label(
                 data['name'],
                 data['color'],
                 data['description']
             )
-
+            app.config['cfg'].labels_rules.pop(old_name)
             app.config['cfg'].labels_rules.update({edited_label.name: edited_label})
             return redirect(url_for('index'))
         else:

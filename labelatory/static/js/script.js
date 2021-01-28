@@ -57,10 +57,9 @@ function addLabel(link){
 
 }
 
-function editLabel(link){
+function editLabel(link, oldName){
     // console.log(label)
     var name = document.getElementById('label-name').value
-    var old_name = name
     var color = document.getElementById('label-color').value
     var description = document.getElementById('label-description').value
 
@@ -88,7 +87,7 @@ function editLabel(link){
 
     var data = JSON.stringify({
         name:name,
-        old_name:old_name,
+        oldName:oldName,
         color:color,
         description:description
     })

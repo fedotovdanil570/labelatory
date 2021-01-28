@@ -103,7 +103,7 @@ function editLabel(link){
 
 }
 
-function switchState(service, reposlug, enabled){
+function switchServiceState(service, reposlug, enabled){
     if (enabled == 'True'){
         enabled = 'False'
     }else{

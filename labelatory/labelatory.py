@@ -365,7 +365,10 @@ def create_app(config=None):
     
     app.logger.info('Loading Labelatory configuration...')
     services, cfg = load_web(app)
-    app.config['cfg'] = cfg
+    cfg_ = {}
+    for key in sorted(cfg.labels_rules.keys()):
+        cfg_[key] = cfg.labels_rules[key]
+    app.config['cfg'] = cfg_
     app.config['services'] = services
 
     @app.route('/', methods=['GET', 'POST', 'DELETE'])
@@ -382,7 +385,7 @@ def create_app(config=None):
         elif request.method == 'DELETE':
             # Delete labels
             data = request.json
-            labels_rules = app.config['cfg'].labels_rules
+            labels_rules = app.config['cfg'] # .labels_rules
             labels_rules.pop(data['name'])  
             return '200'
         else:
@@ -404,8 +407,8 @@ def create_app(config=None):
                 data['description']
             )
             # print(new_label)
-            if not app.config['cfg'].labels_rules.get(new_label.name):
-                app.config['cfg'].labels_rules.update({new_label.name: new_label})
+            if not app.config['cfg'].get(new_label.name):# .labels_rules.get(new_label.name):
+                app.config['cfg'].update({new_label.name: new_label})# .labels_rules.update({new_label.name: new_label})
             else:
                 response = app.response_class(
                     response=json.dumps({"error": "Such a label already defined."}),
@@ -432,8 +435,12 @@ def create_app(config=None):
                 data['color'],
                 data['description']
             )
-            app.config['cfg'].labels_rules.pop(old_name)
-            app.config['cfg'].labels_rules.update({edited_label.name: edited_label})
+            app.config['cfg'].pop(old_name)# .labels_rules.pop(old_name)
+            app.config['cfg'].update({edited_label.name: edited_label})# .labels_rules.update({edited_label.name: edited_label})
+            cfg_ = {}
+            for key in sorted(app.config['cfg'].keys()):
+                cfg_[key] = app.config['cfg'][key]
+            app.config['cfg'] = cfg_
             return redirect(url_for('index'))
         else:
             return render_template(

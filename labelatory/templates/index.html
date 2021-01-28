@@ -54,7 +54,7 @@
                     <a id="add-label-btn" class="btn btn-success" href="{{ url_for('add_label') }}">Add</a>
                 </div>
                 <ul>
-                    {% for label_name, label in cfg.labels_rules.items() %}
+                    {% for label_name, label in cfg.items() %}
                         <li>
                             <p>
                                 <strong>{{ label_name }}</strong>

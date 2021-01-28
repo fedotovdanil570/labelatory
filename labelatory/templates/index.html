@@ -15,20 +15,29 @@
                         <li>
                             <strong>{{ service.name }}</strong>
                             <table class="table table-hover table-bordered">
-                                {% for reposlug, enabeld in service.repos.items() %}
-                                    {% if enabeld == True %}
+                                {% for reposlug, enabled in service.repos.items() %}
+                                    {% if enabled == True %}
 
                                         <tr class="d-flex">
-                                            <td class="col-sm-9"><strong>{{ reposlug }}</strong></td>
+                                            <td class="col-sm-7"><strong>{{ reposlug }}</strong></td>
                                             <td class="col-sm-3"><span style="color: green;">ENABLED</span></td>
+                                            <td class="col-sm-2">
+                                                <button type="button" class="btn btn-sm btn-light" onclick="switchState('{{ enabled }}')">
+                                                    Enable
+                                                </button>
+                                            </td>
                                         </tr>
 
                                     {% else %}
 
                                         <tr class="d-flex">
-                                            <td class="col-sm-9"><strong>{{ reposlug }}</strong></td>
+                                            <td class="col-sm-7"><strong>{{ reposlug }}</strong></td>
                                             <td class="col-sm-3"><span style="color: red;">DISABLED</span></td>
-
+                                            <td class="col-sm-2">
+                                                <button type="button" class="btn btn-sm btn-light" onclick="switchState('{{ enabled }}')">
+                                                    Enable
+                                                </button>
+                                            </td>
                                         </tr>
                                     {% endif %}
                                 {% endfor %}
@@ -42,7 +51,7 @@
             <div id="labels">
                 <div class="col">
                     <h3>Labels</h3>
-                    <a id="add-label-btn" class="btn btn-success" href="{{ url_for('label') }}">Add</a>
+                    <a id="add-label-btn" class="btn btn-success" href="{{ url_for('add_label') }}">Add</a>
                 </div>
                 <ul>
                     {% for label_name, label in cfg.labels_rules.items() %}
@@ -54,7 +63,9 @@
                                 <span>&nbsp;{{ label.color }}</span>
                                 <span>&nbsp;{{ label.description }}</span>
                                 <br>
-                                <button type="button" class="btn btn-sm btn-info">Edit</button>
+                                <!-- var label = {name: new String('{{ label.name }}'), color: new String('{{ label.color }}'), description: new String('{{ label.description }}')};  -->
+                                <!-- <button type="button" class="btn btn-sm btn-info" onclick='window.location="/edit"; var label = {name:"{{ label.name }}", color:"{{ label.color }}", description:"{{ label.description }}"}; editLabel(label);'>Edit</button> -->
+                                <a class="btn btn-sm btn-info" href="{{ url_for('edit_label', name=label.name, color=label.color, description=label.description) }}" >Edit</a>
                                 <button type="button" class="btn btn-sm btn-danger">Delete</button>
                             </p>
                             <!-- <ul>

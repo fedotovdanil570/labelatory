@@ -13,7 +13,7 @@ import json
 from .label import Label
 from .connector import GitHubConnector, GitLabConnector
 
-from flask import Flask, url_for, render_template, request, abort, redirect
+from flask import Flask, url_for, render_template, request, abort, redirect, jsonify
 
 USER = 'fedotovdanil570'
 REPO = 'committee-web-test'
@@ -376,8 +376,8 @@ def create_app(config=None):
             services=services
         )
 
-    @app.route('/labels', methods=['GET', 'POST'])
-    def label():
+    @app.route('/add', methods=['GET', 'POST'])
+    def add_label():
         if request.method == 'POST':
             # Do some things
             data = request.json
@@ -387,8 +387,15 @@ def create_app(config=None):
                 data['description']
             )
             print(new_label)
-
-            app.config['cfg'].labels_rules.update({new_label.name: new_label})
+            if not app.config['cfg'].labels_rules.get(new_label.name):
+                app.config['cfg'].labels_rules.update({new_label.name: new_label})
+            else:
+                response = app.response_class(
+                    response=json.dumps({"error": "Such a label already defined."}),
+                    status=200,
+                    mimetype='application/json'
+                )
+                return response# jsonify({"error": "Such a label already defined."})
             print(url_for('index'))
             return redirect(url_for('index'))
         else:    
@@ -397,6 +404,24 @@ def create_app(config=None):
                 cfg=app.config['cfg']
             )
 
+    @app.route('/edit', methods=['GET', 'PUT'])
+    def edit_label():
+        if request.method == 'PUT':
+            # Do some things
+            data = request.json
+            edited_label = Label(
+                data['name'],
+                data['color'],
+                data['description']
+            )
+
+            app.config['cfg'].labels_rules.update({edited_label.name: edited_label})
+            return redirect(url_for('index'))
+        else:
+            return render_template(
+                'edit_label.html',
+                cfg=app.config['cfg']
+            )
     # @app.route('/labels', methods=['POST'])
     # def webhook():
     #     if request.headers.get("X-Hub-Signature"):

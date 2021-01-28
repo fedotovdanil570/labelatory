@@ -73,33 +73,26 @@
                         <a id="add-label-btn" class="btn btn-success" href="{{ url_for('add_label') }}">Add Label</a>
                     </div>
                 </div>
-                <ul>
+
+                <table class="table table-hover table-bordered">
                     {% for label_name, label in cfg.items() %}
-                        <li>
-                            <p>
-                                <strong>{{ label_name }}</strong>
-                                
+                        <tr class="d-flex">
+                            <td class="col-sm-3"><strong>{{ label_name }}</strong></td>
+                            <td class="col-sm-3">
                                 <div class="colorbox" style="background-color: {{ label.color }};"></div>
                                 <span>&nbsp;{{ label.color }}</span>
-                                <span>&nbsp;{{ label.description }}</span>
-                                <br>
-                                <!-- var label = {name: new String('{{ label.name }}'), color: new String('{{ label.color }}'), description: new String('{{ label.description }}')};  -->
-                                <!-- <button type="button" class="btn btn-sm btn-info" onclick='window.location="/edit"; var label = {name:"{{ label.name }}", color:"{{ label.color }}", description:"{{ label.description }}"}; editLabel(label);'>Edit</button> -->
-                                <a class="btn btn-sm btn-info" href="{{ url_for('edit_label', name=label.name, oldName=label.name, color=label.color, description=label.description) }}">Edit</a>
-                                <button type="button" class="btn btn-sm btn-danger" onclick="deleteLabel('{{ label.name }}')">Delete</button>
-                            </p>
-                            <!-- <ul>
-                                <li>
-                                    <div class="colorbox" style="background-color: {{ label.color }};"></div>
-                                    <span>&nbsp;{{ label.color }}</span>
-                                </li>
-                                <li>
-                                    <span>{{ label.description }}</span>
-                                </li>
-                            </ul> -->
-                        </li>
+                            </td>
+                            <td class="col-sm-3">{{ label.description }}</td>
+                            <td class="col-sm-3">
+                                <div class="row">
+                                    <div class="col-4"><a class="btn btn-sm btn-info" href="{{ url_for('edit_label', name=label.name, oldName=label.name, color=label.color, description=label.description) }}">Edit</a></div>
+                                    <div class="col-8"><button type="button" class="btn btn-sm btn-danger" onclick="deleteLabel('{{ label.name }}')">Delete</button></div>
+                                </div>
+                            </td>
+                        </tr>
                     {% endfor %}
-                </ul>
+                </table>
+
             </div>
         </div>
     </div>

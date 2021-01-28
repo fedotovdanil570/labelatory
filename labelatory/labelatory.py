@@ -377,7 +377,7 @@ def create_app(config=None):
         )
 
     @app.route('/labels', methods=['GET', 'POST'])
-    def add_label():
+    def label():
         if request.method == 'POST':
             # Do some things
             data = request.json
@@ -387,6 +387,7 @@ def create_app(config=None):
                 data['description']
             )
             print(new_label)
+
             app.config['cfg'].labels_rules.update({new_label.name: new_label})
             print(url_for('index'))
             return redirect(url_for('index'))

@@ -36,13 +36,14 @@ function addLabel(link){
     xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
     xhr.onreadystatechange = function(){
         if (this.readyState == 4){
-            window.location = '/';
+            window.location = xhr.responseURL;
+            return;
         }
     }
     xhr.send(data)
 
-    console.log(name)
-    console.log(color)
-    console.log(description)
+    // console.log(name)
+    // console.log(color)
+    // console.log(description)
 
 }

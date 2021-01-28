@@ -409,6 +409,11 @@ def create_app(config=None):
             # print(new_label)
             if not app.config['cfg'].get(new_label.name):# .labels_rules.get(new_label.name):
                 app.config['cfg'].update({new_label.name: new_label})# .labels_rules.update({new_label.name: new_label})
+                cfg_ = {}
+                # Ordering labels
+                for key in sorted(app.config['cfg'].keys()):
+                    cfg_[key] = app.config['cfg'][key]
+                app.config['cfg'] = cfg_
             else:
                 response = app.response_class(
                     response=json.dumps({"error": "Such a label already defined."}),
@@ -437,6 +442,7 @@ def create_app(config=None):
             )
             app.config['cfg'].pop(old_name)# .labels_rules.pop(old_name)
             app.config['cfg'].update({edited_label.name: edited_label})# .labels_rules.update({edited_label.name: edited_label})
+            # Ordering labels
             cfg_ = {}
             for key in sorted(app.config['cfg'].keys()):
                 cfg_[key] = app.config['cfg'][key]

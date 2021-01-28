@@ -60,6 +60,7 @@ function addLabel(link){
 function editLabel(link){
     // console.log(label)
     var name = document.getElementById('label-name').value
+    var old_name = name
     var color = document.getElementById('label-color').value
     var description = document.getElementById('label-description').value
 
@@ -87,6 +88,7 @@ function editLabel(link){
 
     var data = JSON.stringify({
         name:name,
+        old_name:old_name,
         color:color,
         description:description
     })
@@ -101,6 +103,30 @@ function editLabel(link){
     }
     xhr.send(data)
 
+}
+
+function deleteLabel(labelName){
+    var xhr = new XMLHttpRequest()
+
+    var data = JSON.stringify({
+        name: labelName
+    })
+
+    xhr.open('DELETE', '/', true)
+    xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+    xhr.onreadystatechange = function(){
+        if (this.readyState == 4){
+            var resp_type = xhr.getResponseHeader("Content-Type")
+            if (resp_type == 'application/json'){
+                var resp = JSON.parse(xhr.response)
+                alert(resp.error)
+                return
+            }
+            window.location = '/';
+            return;
+        }
+    }
+    xhr.send(data)
 }
 
 function switchServiceState(service, reposlug, enabled){

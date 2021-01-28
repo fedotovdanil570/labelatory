@@ -65,8 +65,8 @@
                                 <br>
                                 <!-- var label = {name: new String('{{ label.name }}'), color: new String('{{ label.color }}'), description: new String('{{ label.description }}')};  -->
                                 <!-- <button type="button" class="btn btn-sm btn-info" onclick='window.location="/edit"; var label = {name:"{{ label.name }}", color:"{{ label.color }}", description:"{{ label.description }}"}; editLabel(label);'>Edit</button> -->
-                                <a class="btn btn-sm btn-info" href="{{ url_for('edit_label', name=label.name, color=label.color, description=label.description) }}" >Edit</a>
-                                <button type="button" class="btn btn-sm btn-danger">Delete</button>
+                                <a class="btn btn-sm btn-info" href="{{ url_for('edit_label', name=label.name, color=label.color, description=label.description) }}">Edit</a>
+                                <button type="button" class="btn btn-sm btn-danger" onclick="deleteLabel('{{ label.name }}')">Delete</button>
                             </p>
                             <!-- <ul>
                                 <li>

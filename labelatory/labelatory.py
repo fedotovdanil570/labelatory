@@ -368,10 +368,10 @@ def create_app(config=None):
     app.config['cfg'] = cfg
     app.config['services'] = services
 
-    @app.route('/', methods=['GET', 'POST'])
+    @app.route('/', methods=['GET', 'POST', 'DELETE'])
     def index():
         if request.method == 'POST':
-            # Do some things
+            # Enabling/disabling repositories
             data = request.json
             
             services_ = app.config['services']
@@ -379,7 +379,14 @@ def create_app(config=None):
                 if service.name == data['service']:
                     service.repos[data['reposlug']] = bool(distutils.util.strtobool(data['enabled']))
             return redirect(url_for('/'))
+        elif request.method == 'DELETE':
+            # Delete labels
+            data = request.json
+            labels_rules = app.config['cfg'].labels_rules
+            labels_rules.pop(data['name'])  
+            return '200'
         else:
+            # Return landing
             return render_template(
                 'index.html',
                 cfg=app.config['cfg'],

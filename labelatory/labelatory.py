@@ -6,13 +6,14 @@ import aiohttp
 import asyncio
 import requests
 import base64
+import json
 
-from werkzeug.utils import redirect
+# from werkzeug.utils import redirect
 
 from .label import Label
 from .connector import GitHubConnector, GitLabConnector
 
-from flask import Flask, url_for, render_template, request, abort
+from flask import Flask, url_for, render_template, request, abort, redirect
 
 USER = 'fedotovdanil570'
 REPO = 'committee-web-test'
@@ -379,11 +380,21 @@ def create_app(config=None):
     def add_label():
         if request.method == 'POST':
             # Do some things
+            data = request.json
+            new_label = Label(
+                data['name'],
+                data['color'],
+                data['description']
+            )
+            print(new_label)
+            app.config['cfg'].labels_rules.update({new_label.name: new_label})
+            print(url_for('index'))
             return redirect(url_for('index'))
-        return render_template(
-            'add_label.html',
-            cfg=app.config['cfg']
-        )
+        else:    
+            return render_template(
+                'add_label.html',
+                cfg=app.config['cfg']
+            )
 
     # @app.route('/labels', methods=['POST'])
     # def webhook():

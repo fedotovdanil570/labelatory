@@ -28,7 +28,7 @@
 
             <div id="footer">
                 <a class="btn btn-secondary" href="{{ url_for('index') }}">Close</a>
-                <button type="button" class="btn btn-primary">Ok</button>
+                <button type="button" class="btn btn-primary" onclick="var link = '{{ url_for('add_label') }}'; addLabel(link);">Ok</button>
             </div>
 
         </div>

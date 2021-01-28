@@ -47,8 +47,17 @@
                 <ul>
                     {% for label_name, label in cfg.labels_rules.items() %}
                         <li>
-                            <strong>{{ label_name }}</strong>
-                            <ul>
+                            <p>
+                                <strong>{{ label_name }}</strong>
+                                
+                                <div class="colorbox" style="background-color: {{ label.color }};"></div>
+                                <span>&nbsp;{{ label.color }}</span>
+                                <span>&nbsp;{{ label.description }}</span>
+                                <br>
+                                <button type="button" class="btn btn-sm btn-info">sada</button>
+                                <button type="button" class="btn btn-sm btn-danger">sada</button>
+                            </p>
+                            <!-- <ul>
                                 <li>
                                     <div class="colorbox" style="background-color: {{ label.color }};"></div>
                                     <span>&nbsp;{{ label.color }}</span>
@@ -56,11 +65,13 @@
                                 <li>
                                     <span>{{ label.description }}</span>
                                 </li>
-                            </ul>
+                            </ul> -->
                         </li>
                     {% endfor %}
                 </ul>
             </div>
         </div>
     </div>
+
+    
 {% endblock %}

@@ -42,7 +42,7 @@
             <div id="labels">
                 <div class="col">
                     <h3>Labels</h3>
-                    <button id="add-label-btn" type="button" class="btn btn-success">Add</button>
+                    <a id="add-label-btn" class="btn btn-success" href="{{ url_for('add_label') }}">Add</a>
                 </div>
                 <ul>
                     {% for label_name, label in cfg.labels_rules.items() %}

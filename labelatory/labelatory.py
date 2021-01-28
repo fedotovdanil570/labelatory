@@ -7,6 +7,8 @@ import asyncio
 import requests
 import base64
 
+from werkzeug.utils import redirect
+
 from .label import Label
 from .connector import GitHubConnector, GitLabConnector
 
@@ -373,10 +375,20 @@ def create_app(config=None):
             services=services
         )
 
-    @app.route('/labels', methods=['POST'])
-    def webhook():
-        if request.headers.get("X-Hub-Signature"):
-            print(request.headers.get("X-Hub-Signature"))
+    @app.route('/labels', methods=['GET', 'POST'])
+    def add_label():
+        if request.method == 'POST':
+            # Do some things
+            return redirect(url_for('index'))
+        return render_template(
+            'add_label.html',
+            cfg=app.config['cfg']
+        )
+
+    # @app.route('/labels', methods=['POST'])
+    # def webhook():
+    #     if request.headers.get("X-Hub-Signature"):
+    #         print(request.headers.get("X-Hub-Signature"))
 
     return app
 

@@ -381,7 +381,7 @@ def create_app(config=None):
             for service in services_:
                 if service.name == data['service']:
                     service.repos[data['reposlug']] = bool(distutils.util.strtobool(data['enabled']))
-            return redirect(url_for('/'))
+            return redirect(url_for('index'))
         elif request.method == 'DELETE':
             # Delete labels
             data = request.json

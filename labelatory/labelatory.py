@@ -481,7 +481,7 @@ def create_app(config=None):
         with open('test.cfg', 'w') as config_file:
             config.write(config_file)
         
-        return
+        return '200'
 
     return app
 

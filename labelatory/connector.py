@@ -72,7 +72,7 @@ class GitHubConnector(DefaultConnector):
             URL = resp.links['next']['url']
             async with self.session.get(URL) as resp:
                 if resp.status != 200:
-                    raise Exception(resp.message)
+                    raise Exception(resp.reason)
                 page_content = await resp.json()
                 page.extend(page_content)
 
@@ -84,7 +84,7 @@ class GitHubConnector(DefaultConnector):
 
         async with self.session.get(URL) as resp:
             if resp.status != 200:
-                raise Exception(resp.message)
+                raise Exception(resp.reason)
             resp_label = await resp.json()
         return Label(
             resp_label['name'], 
@@ -104,7 +104,7 @@ class GitHubConnector(DefaultConnector):
 
         async with self.session.post(URL, json=data) as resp:
             if resp.status != 201:
-                raise Exception(resp.message)
+                raise Exception(resp.reason)
             resp_result = await resp.json()
 
         return Label(
@@ -133,7 +133,7 @@ class GitHubConnector(DefaultConnector):
 
         async with self.session.patch(URL, json=data) as resp:
             if resp.status != 200:
-                raise Exception(resp.message)
+                raise Exception(resp.reason)
             resp_result = await resp.json()
             label._old_name = label.name
         return label
@@ -159,6 +159,8 @@ class GitLabConnector(DefaultConnector):
             'PRIVATE-TOKEN': f'{self.token}'
         }
         resp = requests.get(URL, headers=headers, params=payload)
+        if resp.status_code != 200:
+            raise Exception(resp.text)
         page = resp.json()
         if not resp.links.get('next'):
             return [Label(label['name'], label['color'], label['description']) for label in page]
@@ -168,7 +170,7 @@ class GitLabConnector(DefaultConnector):
             URL = resp.links['next']['url']
             async with self.session.get(URL) as resp:
                 if resp.status != 200:
-                    raise Exception(resp.message)
+                    raise Exception(resp.reason)
                 page_content = await resp.json()
                 page.extend(page_content)
 
@@ -180,7 +182,7 @@ class GitLabConnector(DefaultConnector):
 
         async with self.session.get(URL) as resp:
             if resp.status != 200:
-                raise Exception(resp.message)
+                raise Exception(resp.reason)
             resp_label = await resp.json()
         return Label(
             resp_label['name'], 
@@ -200,7 +202,7 @@ class GitLabConnector(DefaultConnector):
 
         async with self.session.post(URL, json=data) as resp:
             if resp.status != 201:
-                raise Exception(resp.message)
+                raise Exception(resp.reason)
             resp_result = await resp.json()
 
         return Label(
@@ -229,7 +231,7 @@ class GitLabConnector(DefaultConnector):
 
         async with self.session.patch(URL, json=data) as resp:
             if resp.status != 200:
-                raise Exception(resp.message)
+                raise Exception(resp.reason)
             resp_result = await resp.json()
             label._old_name = label.name
         return label

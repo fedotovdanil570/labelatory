@@ -135,10 +135,11 @@ class Service():
                     
                     # Update results for this service
                     results.update({reposlug: violations})
-            return results
+            return (self, results)
 
     async def fix_violation(self, labels_rules, reposlug, violation):
         async with aiohttp.ClientSession(headers=self._headers) as session:
+            print(violation.label.name, violation.type)
             self.connector.session = session
             if violation.type == 'color':
                 # Update label with right color
@@ -160,13 +161,16 @@ class Service():
 
     async def fix_all(self, labels_rules, checked_repos):
         results = {}
-        for reposlug, violations in checked_repos.items():
+        # for repo in checked_repos:
+        for reposlug, violations in checked_repos.items(): # checked_repos.items():
             solved = []
             results[reposlug]= solved
+            print(len(violations))
             for violation in violations:
                 solved.append(await self.fix_violation(labels_rules, reposlug, violation))
-            results[reposlug].extend(solved)
-        return results
+            # results[reposlug].extend(solved)
+            
+        return (self, results)
 
         
 
@@ -349,6 +353,44 @@ def load_app(path):
         print(e)
         exit(1)
 
+
+def check_labels_async_wrapper(cfg):
+    services = cfg['services']
+    labels_rules = cfg['cfg']
+    from pprint import pprint
+    async def _solve_tasks():
+        tasks = []
+        for service in services:
+            task = asyncio.ensure_future(service.check_all(labels_rules))
+            tasks.append(task)
+
+        results = await asyncio.gather(return_exceptions=True, *tasks)
+        pprint(results)
+
+        tasks = []
+        for result in results:
+            service, checked_repos = result
+            if checked_repos:
+                task = asyncio.ensure_future(service.fix_all(labels_rules, checked_repos))
+                tasks.append(task)
+        print(tasks)
+
+        # tasks = []
+        # for i in range(len(results)):
+        #     if results[i]:
+        #         task = asyncio.ensure_future(services[i].fix_all(labels_rules, results.pop(i)))
+        #         tasks.append(task)
+
+        results = await asyncio.gather(return_exceptions=True, *tasks)
+        
+        pprint(results)
+
+    asyncio.set_event_loop(asyncio.SelectorEventLoop())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(_solve_tasks())
+    loop.close()
+
+
 ENVVAR_CONFIG = 'LABELATORY_CONFIG'
 def load_web(app):
     if ENVVAR_CONFIG not in os.environ:
@@ -370,6 +412,9 @@ def create_app(config=None):
         cfg_[key] = cfg.labels_rules[key]
     app.config['cfg'] = cfg_
     app.config['services'] = services
+
+
+    app.logger.info('Labelatory is completely loaded now.')
 
     @app.route('/', methods=['GET', 'POST', 'DELETE'])
     def index():
@@ -483,6 +528,38 @@ def create_app(config=None):
         
         return '200'
 
+    @app.route('/check', methods=['GET'])
+    def check_l():
+        check_labels_async_wrapper(app.config)
+        return '200'
+    
+    import time
+    @app.route('/test', methods=['GET'])
+    def test_async():
+        #code block
+        async def download_site(session, url):
+            async with session.get(url) as response:
+                print("Read {0} from {1}".format(response.content_length, url))
+
+
+        async def download_all_sites(sites):
+            async with aiohttp.ClientSession() as session:
+                tasks = []
+                for url in sites:
+                    task = asyncio.ensure_future(download_site(session, url))
+                    tasks.append(task)
+                await asyncio.gather(*tasks, return_exceptions=True)
+
+        sites = ["https://www.jython.org","http://olympus.realpython.org/dice"]*20
+        start_time = time.time()
+        asyncio.set_event_loop(asyncio.SelectorEventLoop())
+        asyncio.get_event_loop().run_until_complete(download_all_sites(sites))
+        duration = time.time() - start_time
+        return jsonify({"status":f"Downloaded {len(sites)} sites in {duration} seconds"})
+        #end of code block
+    
+    
+    
     return app
 
 

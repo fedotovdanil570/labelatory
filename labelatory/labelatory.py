@@ -468,7 +468,7 @@ def create_app(config=None):
             section_name = f'repo:{service.name}'
             config.add_section(section_name)
             for reposlug, enabled in service.repos.items():
-                config.set(section_name, reposlug, str(enabled))
+                config.set(section_name, reposlug, str(enabled).lower())
 
         # Save labels settings
         for label_name, label in app.config['cfg'].items():

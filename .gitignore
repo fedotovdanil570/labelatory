@@ -3,3 +3,5 @@ __pycache__
 .vscode
 credentials_conf.cfg
 labels_conf.cfg
+labels_conf (copy).cfg
+test.cfg

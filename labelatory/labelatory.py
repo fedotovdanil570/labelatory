@@ -458,6 +458,31 @@ def create_app(config=None):
     #     if request.headers.get("X-Hub-Signature"):
     #         print(request.headers.get("X-Hub-Signature"))
 
+
+    @app.route('/config', methods=['POST'])
+    def save_config():
+        config = configparser.ConfigParser()
+
+        # Save services settings
+        for service in app.config['services']:
+            section_name = f'repo:{service.name}'
+            config.add_section(section_name)
+            for reposlug, enabled in service.repos.items():
+                config.set(section_name, reposlug, str(enabled))
+
+        # Save labels settings
+        for label_name, label in app.config['cfg'].items():
+            section_name = f'label:{label.name}'
+            config.add_section(section_name)
+            config.set(section_name, 'color', label.color)
+            config.set(section_name, 'description', label.description)
+        
+        # with open(ENVVAR_CONFIG, 'w') as config_file:
+        with open('test.cfg', 'w') as config_file:
+            config.write(config_file)
+        
+        return
+
     return app
 
 

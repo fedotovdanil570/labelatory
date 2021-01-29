@@ -159,3 +159,23 @@ function switchServiceState(service, reposlug, enabled){
     }
     xhr.send(data)
 }
+
+function saveConfig(){
+    var xhr = new XMLHttpRequest()
+
+    xhr.open('POST', '/config', true)
+    xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+    xhr.onreadystatechange = function(){
+        if (this.readyState == 4){
+            var resp_type = xhr.getResponseHeader("Content-Type")
+            if (resp_type == 'application/json'){
+                var resp = JSON.parse(xhr.response)
+                alert(resp.error)
+                return
+            }
+            window.location = '/';
+            return;
+        }
+    }
+    xhr.send(null)
+}

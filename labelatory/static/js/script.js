@@ -179,3 +179,52 @@ function saveConfig(){
     }
     xhr.send(null)
 }
+
+function checkLabels(){
+    var xhr = new XMLHttpRequest()
+
+    xhr.open('GET', '/check/labels', true)
+    xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+    xhr.onreadystatechange = function(){
+        if (this.readyState == 4){
+            var resp_type = xhr.getResponseHeader("Content-Type")
+            if (resp_type == 'application/json'){
+                var resp = JSON.parse(xhr.response)
+                console.log(resp)
+
+                for (var key of Object.keys(resp)){
+                    console.log(key + "->" + resp[key])
+                    document.getElementById(key+"."+resp[key]).innerHTML = "bad"
+                }
+                return
+            }
+            return;
+        }
+    }
+    xhr.send(null)
+}
+
+
+function fixLabels(){
+    var xhr = new XMLHttpRequest()
+
+    xhr.open('POST', '/check/labels', true)
+    xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+    xhr.onreadystatechange = function(){
+        if (this.readyState == 4){
+            var resp_type = xhr.getResponseHeader("Content-Type")
+            if (resp_type == 'application/json'){
+                var resp = JSON.parse(xhr.response)
+                console.log(resp)
+                for (var key of Object.keys(resp)){
+                    console.log(key + "->" + resp[key])
+                    // document.getElementById(key+"."+resp[key]).innerHTML = "OK"
+                }
+                alert('Labels on all services are fixed.')
+                return
+            }
+            return;
+        }
+    }
+    xhr.send(null)
+}

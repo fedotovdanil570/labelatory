@@ -95,10 +95,12 @@ class GitHubConnector(DefaultConnector):
     async def create_label(self, reposlug, label):
         user, repo = reposlug.split('/')
         URL = f'https://api.github.com/repos/{user}/{repo}/labels'
-
+        color = label.color
+        if label.color.startswith('#'):
+            color = color[1:]
         data = {
             'name': label.name, 
-            'color':label.color[1:], 
+            'color':color, 
             'description':label.description
         }
 
@@ -124,15 +126,18 @@ class GitHubConnector(DefaultConnector):
     async def update_label(self, reposlug, label):
         user, repo = reposlug.split('/')
         URL = f'https://api.github.com/repos/{user}/{repo}/labels/{label._old_name}'
-
+        color = label.color
+        if label.color.startswith('#'):
+            color = color[1:]
         data = {
             'new_name': label.name,
-            'color': label.color[1:],
+            'color': color,
             'description': label.description
         }
 
         async with self.session.patch(URL, json=data) as resp:
             if resp.status != 200:
+                resp_result = await resp.json()
                 raise Exception(resp.reason)
             resp_result = await resp.json()
             label._old_name = label.name

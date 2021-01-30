@@ -17,6 +17,11 @@ class DefaultConnector(metaclass=ABCMeta):
         self.session = session # aiohttp.ClientSession(headers=headers)
 
     @abstractmethod
+    def get_repos(self):
+        """ Retrieves repositories of the authenticated user. """
+        raise NotImplementedError('Too generic. Use a subclass for getting repositories.')
+
+    @abstractmethod
     def get_labels(self, reposlug):
         """ Retrieves labels from repository. """
         raise NotImplementedError('Too generic. Use a subclass for getting labels.')
@@ -49,6 +54,31 @@ class GitHubConnector(DefaultConnector):
     def __init__(self, token=None, session=None):
         super().__init__(token, session)
         
+    async def get_repos(self):
+        URL = f'https://api.github.com/user/repos'
+        payload = {'per_page':100}
+
+        # Get first page of repositories synchronously
+        headers = {
+            'User-Agent': 'Labelatory',
+            'Authorization': f'token {self.token}'
+        }
+        resp = requests.get(URL, headers=headers, params=payload)
+        if resp.status_code != 200:
+            raise Exception(resp.text)
+        page = resp.json()
+        if not resp.links.get('next'):
+            return [repo['full_name'] for repo in page]
+        
+        # If there are more pages, get them in ansynchronous manner
+        while resp.links.get('next'):
+            URL = resp.links['next']['url']
+            async with self.session.get(URL) as resp:
+                if resp.status != 200:
+                    raise Exception(resp.reason)
+                page_content = await resp.json()
+                page.extend(page_content)
+        return [repo['full_name'] for repo in page]
 
     async def get_labels(self, reposlug):
         user, repo = reposlug.split('/')
@@ -152,6 +182,32 @@ class GitLabConnector(DefaultConnector):
             self.host = host
         else:
             self.host = 'gitlab.com'
+
+    async def get_repos(self):
+        URL = f'https://{self.host}/api/v4/projects'
+        payload = {'per_page':100}
+
+        # Get first page of repositories synchronously
+        headers = {
+            'User-Agent': 'Labelatory',
+            'PRIVATE-TOKEN': f'{self.token}'
+        }
+        resp = requests.get(URL, headers=headers, params=payload)
+        if resp.status_code != 200:
+            raise Exception(resp.text)
+        page = resp.json()
+        if not resp.links.get('next'):
+            return [repo['full_name'] for repo in page]
+        
+        # If there are more pages, get them in ansynchronous manner
+        while resp.links.get('next'):
+            URL = resp.links['next']['url']
+            async with self.session.get(URL) as resp:
+                if resp.status != 200:
+                    raise Exception(resp.reason)
+                page_content = await resp.json()
+                page.extend(page_content)
+        return [repo['full_name'] for repo in page]    
     
     async def get_labels(self, reposlug):
         reposlug = reposlug.replace('/', '%2F')

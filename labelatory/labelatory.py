@@ -563,6 +563,16 @@ def check_labels_async_wrapper(cfg):
     loop.close()
     return results
 
+def get_repos_for_service_async_wrapper(service):
+
+    asyncio.set_event_loop(asyncio.SelectorEventLoop())
+    loop = asyncio.get_event_loop()
+    repos = asyncio.ensure_future(service.connector.get_repos())
+
+    results = loop.run_until_complete(repos)
+    loop.close()
+    return results
+
 ENVVAR_CONFIG = 'LABELATORY_CONFIG'
 def load_web(app):
     if ENVVAR_CONFIG not in os.environ:
@@ -693,7 +703,7 @@ def create_app(config=None):
         # If there is not 'x-*****-event' header
         response = app.response_class(
                     response=json.dumps({"error": "Service is not supported."}),
-                    status=500,
+                    status=400,
                     mimetype='application/json'
                 )
         return response    
@@ -727,6 +737,39 @@ def create_app(config=None):
                         status=200
                     )
         return response
+
+    @app.route('/repos', methods=['GET', 'POST'])
+    def repos():
+        if request.method == 'GET':
+            service_name = request.args.get('service')
+            services_ = app.config['services']
+            for service_ in services_:
+                if service_.name == service_name:
+                    repos = []
+                    repos_ = get_repos_for_service_async_wrapper(service_)
+                    used_repos = service_.repos.keys()
+                    for repo in repos_:
+                        if repo not in used_repos:
+                            repos.append(repo)
+                    # repos = json.dumps({service_name: repos})
+                    return render_template(
+                        'add_repo.html',
+                        service=service_name,
+                        repos=repos
+                    )
+        else:
+            selected_service = [key for key in request.json.keys()]
+            selected_service = selected_service[0]
+            selected_repos = request.json[selected_service]
+
+            services_ = app.config['services']
+            for service_ in services_:
+                if service_.name == selected_service:
+                    for repo in selected_repos:
+                        service_.repos.update({repo: True})
+                    break
+
+            return redirect(url_for('index'))
 
     @app.route('/check', methods=['GET', 'POST'])
     def check_l():

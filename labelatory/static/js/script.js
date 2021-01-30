@@ -160,6 +160,54 @@ function switchServiceState(service, reposlug, enabled){
     xhr.send(data)
 }
 
+function addRepos(link, service){
+
+    function getSelectValues(selector) {
+        var result = [];
+        var options = selector && selector.options;
+        var opt;
+      
+        for (var i=0, iLen=options.length; i<iLen; i++) {
+          opt = options[i];
+      
+          if (opt.selected) {
+            result.push(opt.value || opt.text);
+          }
+        }
+        return result;
+    }
+    
+    var selector = document.getElementById('repo-selector')
+    repos = getSelectValues(selector)
+
+    if (repos.length > 0){
+        var xhr = new XMLHttpRequest()
+        var obj = {}
+        obj[service] = repos
+        var data = JSON.stringify(obj)
+
+        xhr.open('POST', link, true)
+        xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+        xhr.onreadystatechange = function(){
+            if (this.readyState == 4){
+                var resp_type = xhr.getResponseHeader("Content-Type")
+                if (resp_type == 'application/json'){
+                    var resp = JSON.parse(xhr.response)
+                    alert(resp.error)
+                    return
+                }
+                window.location = xhr.responseURL;
+                return;
+            }
+        }
+        xhr.send(data)
+
+    }else{
+        window.location = '/';
+        return;
+    }
+}
+
 function saveConfig(){
     var xhr = new XMLHttpRequest()
 

@@ -25,44 +25,54 @@
                         <!-- <button id="check-btn" type="button" class="btn btn-secondary">Check</button> -->
                         <!-- <a id="check-btn" class="btn btn-secondary" href="{{ url_for('test_async') }}">Check</a> -->
                         <button id="fix-btn" type="button" class="btn btn-secondary" onclick="fixLabels()">Fix All</button>
-                        <button id="fix-btn" type="button" class="btn btn-secondary" onclick="fixLabels()">Add Service</button>
+                        
                     </div>
                 </div>
-                <ul>
-                    {% for service in services %}
-                        <li>
-                            <strong>{{ service.name }}</strong>
-                            <table class="table table-hover table-bordered">
-                                {% for reposlug, enabled in service.repos.items() %}
-                                    {% if enabled == True %}
+                <!-- <ul> -->
+                {% for service in services %}
+                    <!-- <li> -->
+                    <p>
+                        <div class="row">
+                            <div class="col" align="left">
+                                <strong>{{ service.name }}</strong>
+                            </div>
+                            <div class="col" align="right">
+                                <a id="add-service-btn-{{ service.name }}" class="btn btn-sm btn-secondary" href="{{ url_for('repos', service=service.name) }}">Add repo</a>
+                            </div>
+                        </div>
+                        <table class="table table-hover table-bordered">
+                            {% for reposlug, enabled in service.repos.items() %}
+                                {% if enabled == True %}
 
-                                        <tr class="d-flex">
-                                            <td class="col-sm-7"><strong>{{ reposlug }}</strong></td>
-                                            <td class="col-sm-3"><span style="color: green;">ENABLED</span></td>
-                                            <td class="col-sm-2">
-                                                <button type="button" class="btn btn-sm btn-light" onclick="switchServiceState('{{ service.name }}', '{{ reposlug }}', '{{ enabled }}')">
-                                                    Switch
-                                                </button>
-                                            </td>
-                                        </tr>
+                                    <tr class="d-flex">
+                                        <td class="col-sm-7"><strong>{{ reposlug }}</strong></td>
+                                        <td class="col-sm-3"><span style="color: green;">ENABLED</span></td>
+                                        <td class="col-sm-2">
+                                            <button type="button" class="btn btn-sm btn-light" onclick="switchServiceState('{{ service.name }}', '{{ reposlug }}', '{{ enabled }}')">
+                                                Switch
+                                            </button>
+                                        </td>
+                                    </tr>
 
-                                    {% else %}
+                                {% else %}
 
-                                        <tr class="d-flex">
-                                            <td class="col-sm-7"><strong>{{ reposlug }}</strong></td>
-                                            <td class="col-sm-3"><span style="color: red;">DISABLED</span></td>
-                                            <td class="col-sm-2">
-                                                <button type="button" class="btn btn-sm btn-light" onclick="switchServiceState('{{ service.name }}', '{{ reposlug }}', '{{ enabled }}')">
-                                                    Switch
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    {% endif %}
-                                {% endfor %}
-                            </table>
-                        </li>
-                    {% endfor %}
-                </ul>
+                                    <tr class="d-flex">
+                                        <td class="col-sm-7"><strong>{{ reposlug }}</strong></td>
+                                        <td class="col-sm-3"><span style="color: red;">DISABLED</span></td>
+                                        <td class="col-sm-2">
+                                            <button type="button" class="btn btn-sm btn-light" onclick="switchServiceState('{{ service.name }}', '{{ reposlug }}', '{{ enabled }}')">
+                                                Switch
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </table>
+                    <!-- </li> -->
+                    <p>
+                    <br>
+                {% endfor %}
+                <!-- </ul> -->
             </div>
         </div>
         <div class="col-6">

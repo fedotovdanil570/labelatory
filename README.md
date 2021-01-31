@@ -6,7 +6,7 @@ Labelatory is a web application for synchronization of labels among repositories
 
 Labelatory is available on https://pypi.org/project/labelatory/0.1/
 
-## Using
+## Usage
 To use the Labelatory application you have to do the following steps:
 
 * Install it via pip

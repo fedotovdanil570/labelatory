@@ -37,7 +37,6 @@ Credentials cofiguration file example:
 [config]
 type = <TYPE>
 repo = github_username/github_config_repo
-secret = <GITHUB_WEBHOOK_SECRET>
 
 [service:github]
 token = <GITHUB_TOKEN>

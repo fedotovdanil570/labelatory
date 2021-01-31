@@ -45,9 +45,7 @@ VALID_OUTPUT_FORMATS = ['commits', 'rules', 'none']
 class LabelatoryConfig():
     """ Stores common configuration for the application. \
         services - supported services;\
-        labels_rules - rules for labels;\
-        source_secret - secret key for webhook to github repo, \
-            where the labels configuration is stored. """
+        labels_rules - rules for labels; """
     def __init__(self, services=None, labels_rules=None, source_secret=None):
         self.services = services
         self.labels_rules = labels_rules

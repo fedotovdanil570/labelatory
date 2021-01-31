@@ -12,7 +12,7 @@ with open('README.md', 'r') as f:
 
 setup(
     name='labelatory',
-    version='0.1.2',
+    version='0.1',
     description='Labelatory - the powerful and the greatest tool\
          for label management across repositories on different git systems.',
     long_description=long_description,

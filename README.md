@@ -4,11 +4,35 @@
 
 Labelatory is a web application for synchronization of labels among repositories stored on diffenrent git services.
 
-This project is a semestral project for course NI-PYT on CTU in Prague.
+## Using
+To use the Labelatory application you have to do the following steps:
 
-## Requirements
+* Install it via pip
 
-### Core functionality
+```
+pip install labelatory
+```
+* Set necessary environment variables:
+```
+export FLASK_APP=labelatory
+export LABELATORY_CONFIG=<PATH TO YOUR credentials_conf.cfg>
+```
+
+* Run Flask application
+```
+flask run
+```
+
+* Then go to 127.0.0.1:5000
+
+It is recommenden to use ```ngrok```  or another similar program to make Labelatory be able to process webhooks events from your repositories.
+
+## Screenshots
+<p>
+  <img src=".screenshot/index.png">
+</p>
+
+## Core functionality
 The application allows to manage labels (create, update and delete) for given services and repositries according to API of the services. 
 
 * create - if there is a configuration for the label, but repositry doesn't contain this label, create it.
@@ -17,7 +41,7 @@ The application allows to manage labels (create, update and delete) for given se
 
 Work with API runs in asynchronous manner.
 
-### Web Application functionality
+## Web Application functionality
 The application is built with Flask framework and uses webhooks cofigured for labels events. Once some action with some label in managable repository is performed, the application 
 reacts on this event and checks whether the label conforms to configuration. If it does not conform, the application reverts this label.
 
@@ -29,7 +53,7 @@ Adding support for a new service is provided with implementing the interface for
 
 User can save his customized preferences to configuration file.
 
-### Configuration file example
+## Configuration file example
 Credentials cofiguration file is stored locally and contains data for accessing the services and defines, where the label configuration file is stored. 
 
 Credentials cofiguration file example:

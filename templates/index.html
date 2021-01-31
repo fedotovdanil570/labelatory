@@ -1,0 +1,113 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-6">
+            <div align="left">
+                <h3>Configuration</h3>
+            </div>
+        </div>
+        <div class="col-6">
+            <div id="saving-conf" align="right">
+                <button id="check-btn" type="button" class="btn btn-secondary" onclick="saveConfig()">Save configuration</button>
+            </div>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="col-6">
+            <div id='services'>
+                <div class="row">
+                    <div class="col" align="left">
+                        <h3>Services</h3>
+                    </div>
+                    <div class="col" align="right">
+                        <!-- <button id="check-btn" type="button" class="btn btn-secondary">Check</button> -->
+                        <!-- <a id="check-btn" class="btn btn-secondary" href="{{ url_for('test_async') }}">Check</a> -->
+                        <button id="fix-btn" type="button" class="btn btn-secondary" onclick="fixLabels()">Fix All</button>
+                        
+                    </div>
+                </div>
+                <!-- <ul> -->
+                {% for service in services %}
+                    <!-- <li> -->
+                    <p>
+                        <div class="row">
+                            <div class="col" align="left">
+                                <strong>{{ service.name }}</strong>
+                            </div>
+                            <div class="col" align="right">
+                                <a id="add-service-btn-{{ service.name }}" class="btn btn-sm btn-secondary" href="{{ url_for('repos', service=service.name) }}">Add repo</a>
+                            </div>
+                        </div>
+                        <table class="table table-hover table-bordered">
+                            {% for reposlug, enabled in service.repos.items() %}
+                                {% if enabled == True %}
+
+                                    <tr class="d-flex">
+                                        <td class="col-sm-7"><strong>{{ reposlug }}</strong></td>
+                                        <td class="col-sm-3"><span style="color: green;">ENABLED</span></td>
+                                        <td class="col-sm-2">
+                                            <button type="button" class="btn btn-sm btn-light" onclick="switchServiceState('{{ service.name }}', '{{ reposlug }}', '{{ enabled }}')">
+                                                Switch
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                {% else %}
+
+                                    <tr class="d-flex">
+                                        <td class="col-sm-7"><strong>{{ reposlug }}</strong></td>
+                                        <td class="col-sm-3"><span style="color: red;">DISABLED</span></td>
+                                        <td class="col-sm-2">
+                                            <button type="button" class="btn btn-sm btn-light" onclick="switchServiceState('{{ service.name }}', '{{ reposlug }}', '{{ enabled }}')">
+                                                Switch
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </table>
+                    <!-- </li> -->
+                    <p>
+                    <br>
+                {% endfor %}
+                <!-- </ul> -->
+            </div>
+        </div>
+        <div class="col-6">
+            <div id="labels">
+                <div class="row">
+                    <div class="col" align="left">
+                        <h3>Labels</h3>
+                    </div>
+                    <div class="col" align="right">
+                        <a id="add-label-btn" class="btn btn-success" href="{{ url_for('add_label') }}">Add Label</a>
+                    </div>
+                </div>
+
+                <table class="table table-hover table-bordered">
+                    {% for label_name, label in cfg.items() %}
+                        <tr class="d-flex">
+                            <td class="col-sm-3"><strong>{{ label_name }}</strong></td>
+                            <td class="col-sm-3">
+                                <div class="colorbox" style="background-color: {{ label.color }};"></div>
+                                <span>&nbsp;{{ label.color }}</span>
+                            </td>
+                            <td class="col-sm-3">{{ label.description }}</td>
+                            <td class="col-sm-3">
+                                <div class="row">
+                                    <div class="col-4"><a class="btn btn-sm btn-info" href="{{ url_for('edit_label', name=label.name, oldName=label.name, color=label.color, description=label.description) }}">Edit</a></div>
+                                    <div class="col-8"><button type="button" class="btn btn-sm btn-danger" onclick="deleteLabel('{{ label.name }}')">Delete</button></div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </table>
+
+            </div>
+        </div>
+    </div>
+
+    
+{% endblock %}

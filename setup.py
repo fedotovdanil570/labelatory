@@ -12,7 +12,7 @@ with open('README.md', 'r') as f:
 
 setup(
     name='labelatory',
-    version='0.1.1',
+    version='0.1.2',
     description='Labelatory - the powerful and the greatest tool\
          for label management across repositories on different git systems.',
     long_description=long_description,
@@ -22,6 +22,9 @@ setup(
     keywords='git, github, gitlab, label, labels, repository, api',
     url='https://github.com/fedotovdanil570/labelatory',
     packages=find_packages(),
+    package_data={
+        'labelatory': ['templates/*.html'],
+    },
     install_requires=['aiohttp', 'requests', 'Flask'],
     entry_points={
         'console_scripts': [

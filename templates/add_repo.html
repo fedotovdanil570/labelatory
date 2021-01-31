@@ -1,0 +1,32 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+    <div class="row">
+        <div class="col">
+            
+            <div id="header">
+                <h5 id="add-label-label">Add new repo for service {{ service }}</h5>
+            </div>
+
+            <div id="body">
+                <form>
+                    <div class="form-group">
+                        <label for="label-name" class="col-form-label">List of repos:</label>
+                        <!-- <input type="text" class="form-control" id="label-name"> -->
+                        <select multiple size="10" class="form-control" id="repo-selector">
+                            {% for repo in repos %}
+                                <option>{{ repo }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+
+            <div id="footer">
+                <a class="btn btn-secondary" href="{{ url_for('index') }}">Close</a>
+                <button type="button" class="btn btn-primary" onclick="var link = '{{ url_for('repos') }}'; addRepos(link, '{{ service }}');">Ok</button>
+            </div>
+
+        </div>
+    </div>
+{% endblock %}

@@ -30,7 +30,12 @@ It is recommenden to use ```ngrok```  or another similar program to make Labelat
 ## Screenshots
 The application after launch
 <p>
-  <img src="screenshot/index.png" width="800" height="400">
+  <img src="screenshots/index.png" width="800" height="400">
+</p>
+
+Tests passed
+<p>
+  <img src="screenshots/tests_labelatory.png" width="800" height="200">
 </p>
 
 ## Core functionality

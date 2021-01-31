@@ -11,35 +11,14 @@ import json
 import hmac
 import hashlib
 
-# from werkzeug.utils import redirect
 
 from .label import Label
 from .connector import GitHubConnector, GitLabConnector
 
 from flask import Flask, url_for, render_template, request, abort, redirect, jsonify
 
-USER = 'fedotovdanil570'
-REPO = 'committee-web-test'
 
 LOCAL_LABELS_CONF_SOURCE = 'labels_conf.cfg'
-
-PATH_REGEX = r'(\/.*?\.[\w:]+)'
-
-RULE_TYPES = ['message', 'path', 'stats']
-
-PLAIN_MATCH_PREFIX = 'plain:'
-REGEX_MATCH_PREFIX = 'regex:'
-WORDLIST_MATCH_PREFIX = 'wordlist:'
-
-VALID_MESSAGE_AND_PATH_MATCH_TYPES = ['plain', 'regex', 'wordlist']
-VALID_RULE_MATCH_FORMAT_REGEX = r'.+:.+'
-
-VALID_FILE_STATUSES = ['modified', 'added', 'removed', '*']
-
-# VALID_STAT_TYPES = ['total', 'additions', 'deletions', 'changes']
-VALID_COMMIT_STAT_TYPES = ['total', 'additions', 'deletions']
-VALID_FILE_STAT_TYPES = ['additions', 'deletions', 'changes']
-VALID_OUTPUT_FORMATS = ['commits', 'rules', 'none']
 
 
 class LabelatoryConfig():
@@ -60,12 +39,6 @@ class Violation():
         self.required = required
         self.found = found
 
-class CheckResult():
-    def __init__(self, reposlug, violations):
-        self.reposlug = reposlug
-        # self.label = label
-        self.violations = violations
-
 class Service():
     def __init__(self, name, token, secret, repos):
         self.name = name
@@ -73,9 +46,6 @@ class Service():
         self.secret = secret
         self.repos = repos
         
-    # def check(self, labels_rules):
-    #     """ Checks whether all enabled repos of the service correctly defines labels. """
-    #     raise NotImplementedError('Too generic. Use a subclass for check.')
     
     async def fix_labels(self, reposlug, labels_rules, labels=None, action=None):
         """ Checks single label. If only name is provided, gets the label from the service. """
@@ -121,49 +91,34 @@ class Service():
             self.connector.session = session
 
             results = {}
-            # results = []
 
             for reposlug, enabled in self.repos.items():
                 if enabled:
                     labels_rules_copy = labels_rules.copy()
-                    # status, labels = await self.connector.get_labels(reposlug)
                     labels = await self.connector.get_labels(reposlug)
-                    # if status != 200:
-                    #     raise Exception('Can\'t connect!')
 
                     # Loop on every label in current repository
                     violations = []
                     for label in labels:
-                        # name = label['name']
                         label_name = label.name
-                        label_rule = labels_rules_copy.get(label_name)# labels_rules.get(name)
+                        label_rule = labels_rules_copy.get(label_name)
 
                         if label_rule:
                             # Get parameters of retrieved label
-                            label_color = label.color# label['color']
-                            label_description = label.description# label['description']
+                            label_color = label.color
+                            label_description = label.description
                             if label_color[0] == '#':
                                 label_color = label_color[1:]
-                            
                             # Check label parameters
                             if label_color != label_rule.color[1:]:
-                                # color = label['color']
                                 right_color = label_rule.color
-                                # violations.append(f'Wrong label color in repository \'{reposlug}\' in label \'{label_name}\'. Must be \'{right_color}\', found \'{label_color}\'.')
                                 violations.append(Violation('color', label, label_color, right_color))
-                                # raise Exception(f'Wrong label color in repository {reposlug} in label {name}. Must be {right_color}, found {color}.')
-                            
                             if label_description != label_rule.description:
-                                # description = label['description']
                                 right_description = label_rule.description
-                                # violations.append(f'Wrong label description in repository \'{reposlug}\' in label \'{label_name}\'. Must be \'{right_description}\', found \'{label_description}\'.')
                                 violations.append(Violation('description', label, label_description, right_description))
-                                # raise Exception(f'Wrong label description in repository {reposlug} in label {name}. Must be {right_description}, found {description}.')
-                            
                             # Remove checked label from rules for this reposlug
                             labels_rules_copy.pop(label_name)
                         else:
-                            # violations.append(f'Wrong label in repository \'{reposlug}\'. Label with name \'{label_name}\' is not defined.')
                             violations.append(Violation('extra', label, label_name))
                         
                     # Include missing labels
@@ -175,7 +130,6 @@ class Service():
 
     async def fix_violation(self, labels_rules, reposlug, violation):
         async with aiohttp.ClientSession(headers=self._headers) as session:
-            # print(violation.label.name, violation.type)
             self.connector.session = session
             if violation.type == 'color':
                 # Update label with right color
@@ -197,14 +151,11 @@ class Service():
 
     async def fix_all(self, labels_rules, checked_repos):
         results = {}
-        # for repo in checked_repos:
-        for reposlug, violations in checked_repos.items(): # checked_repos.items():
+        for reposlug, violations in checked_repos.items():
             solved = []
             results[reposlug]= solved
-            # print(len(violations))
             for violation in violations:
                 solved.append(await self.fix_violation(labels_rules, reposlug, violation))
-            # results[reposlug].extend(solved)
             
         return (self, results)
 
@@ -224,6 +175,7 @@ class GitHubService(Service):
         }
 
     def check_secret(self, request):
+        """ Checks secret for webhook. """
         signature = request.headers["X-Hub-Signature"]
 
         if not signature or not signature.startswith("sha1="):
@@ -235,7 +187,7 @@ class GitHubService(Service):
         return hmac.compare_digest(signature, "sha1=" + digest)
 
     def webhook(self, request, labels_rules):
-       
+        """ Processes webhook request. """
         async def _fix_labels():
             repository = request.json['repository']['full_name']
             if self.repos.get(repository):
@@ -308,10 +260,12 @@ class GitLabService(Service):
         }
 
     def check_secret(self, request):
+        """ Checks secret for webhook. """
         secret = request.headers["X-Gitlab-Token"]
         return secret == self.secret
 
     def webhook(self, request, labels_rules):
+        """ Processes webhook request. """
         async def _fix_labels():
             repository = request.json['project']['path_with_namespace']
             if self.repos.get(repository):
@@ -342,14 +296,12 @@ class GitLabService(Service):
                 results = loop.run_until_complete(_fix_labels())
                 loop.close()
                 if results:
-                    # return (200, 'OK')
                     response = Response(
                         response='OK',
                         status=200,
                     )
                     return response
                 else:
-                    # return (500, 'Something wrong')
                     response = Response(
                         response='Something wrong',
                         status=500
@@ -374,9 +326,6 @@ class GitLabService(Service):
 
 class ConfigLoader():
     
-    # @classmethod
-    # def _load_credentials_config(cls, cgf):
-
     SUPPORTED_SERVICES = {
         'github': GitHubService,
         'gitlab': GitLabService
@@ -384,6 +333,7 @@ class ConfigLoader():
 
     @classmethod
     def _load_label_rule(cls, cfg_labels, label_rule):
+        """ Loads labels configuration. """
         label_name = label_rule[6:]
         label_color = cfg_labels.get(label_rule, 'color')
         label_description = cfg_labels.get(label_rule, 'description')
@@ -455,7 +405,7 @@ class ConfigLoader():
     
     @classmethod
     def load(cls, cfg):
-        # config_dir = pathlib.Path(config_file).resolve().parents[0]
+        """" Loads configuration. """
         labels_conf_type = cfg.get('config', 'type')
         service_sections = (s for s in cfg.sections() if s.startswith('service:'))
         remote_secret = None
@@ -479,9 +429,9 @@ class ConfigLoader():
             source_secret=remote_secret
         )
 
-        
 
 def validate_reposlug(reposlug):
+    """ Validates reposlug. """
     parts = reposlug.split('/')
     if len(parts) != 2:
         raise Exception(f'Reposlug {reposlug} is not correct!')
@@ -489,6 +439,7 @@ def validate_reposlug(reposlug):
         
 
 def load_app(path):
+    """ Loads app. """
     try:
         cfg = configparser.ConfigParser()
         with open(path) as f:
@@ -500,6 +451,7 @@ def load_app(path):
 
 
 def fix_labels_async_wrapper(cfg):
+    """ Fixes labels of all enabled repositories for all supported services.  """
     services = cfg['services']
     labels_rules = cfg['cfg']
     from pprint import pprint
@@ -511,7 +463,6 @@ def fix_labels_async_wrapper(cfg):
         results = await asyncio.gather(return_exceptions=True, *tasks)
         pprint(results)
 
-        # TODO check if there is an exception among list items. Write a test for it.
         tasks = []
         for result in results:
             service, checked_repos = result
@@ -598,6 +549,9 @@ def create_app(config=None):
 
     @app.route('/', methods=['GET', 'POST', 'DELETE'])
     def index():
+        """ Returns the landing page on GET request.
+        Enables/disables avaliable repositories for supported services on POST request.
+        Deletes chosen label on DELETE request. """
         if request.method == 'POST':
             # Enabling/disabling repositories
             data = request.json
@@ -611,13 +565,17 @@ def create_app(config=None):
             # Delete labels
             data = request.json
             labels_rules = app.config['cfg'] # .labels_rules
-            labels_rules.pop(data['name'])  
-            response = app.response_class(
-                        response='OK',
-                        status=200
-                    )
-            return response
-            # return '200'
+
+            if labels_rules.get(data['name']):
+                labels_rules.pop(data['name'])  
+
+                response = app.response_class(
+                            response='OK',
+                            status=200
+                        )
+                return response
+            else:
+                return 'Not found', 404
         else:
             # Return landing
             return render_template(
@@ -628,17 +586,16 @@ def create_app(config=None):
 
     @app.route('/add', methods=['GET', 'POST'])
     def add_label():
+        """ Adds a new label """
         if request.method == 'POST':
-            # Do some things
             data = request.json
             new_label = Label(
                 data['name'],
                 data['color'],
                 data['description']
             )
-            # print(new_label)
-            if not app.config['cfg'].get(new_label.name):# .labels_rules.get(new_label.name):
-                app.config['cfg'].update({new_label.name: new_label})# .labels_rules.update({new_label.name: new_label})
+            if not app.config['cfg'].get(new_label.name):
+                app.config['cfg'].update({new_label.name: new_label})
                 cfg_ = {}
                 # Ordering labels
                 for key in sorted(app.config['cfg'].keys()):
@@ -647,11 +604,10 @@ def create_app(config=None):
             else:
                 response = app.response_class(
                     response=json.dumps({"error": "Such a label already defined."}),
-                    status=500,
+                    status=400,
                     mimetype='application/json'
                 )
-                return response# jsonify({"error": "Such a label already defined."})
-            # print(url_for('index'))
+                return response
             return redirect(url_for('index'))
         else:    
             return render_template(
@@ -661,8 +617,9 @@ def create_app(config=None):
 
     @app.route('/edit', methods=['GET', 'PUT'])
     def edit_label():
+        """ Edits chosen label. """
         if request.method == 'PUT':
-            # Do some things
+            # Convert data to Label object
             data = request.json
             old_name = data['oldName']
             edited_label = Label(
@@ -670,8 +627,8 @@ def create_app(config=None):
                 data['color'],
                 data['description']
             )
-            app.config['cfg'].pop(old_name)# .labels_rules.pop(old_name)
-            app.config['cfg'].update({edited_label.name: edited_label})# .labels_rules.update({edited_label.name: edited_label})
+            app.config['cfg'].pop(old_name)
+            app.config['cfg'].update({edited_label.name: edited_label})
             # Ordering labels
             cfg_ = {}
             for key in sorted(app.config['cfg'].keys()):
@@ -686,6 +643,7 @@ def create_app(config=None):
     
     @app.route('/labels', methods=['POST'])
     def webhook():
+        """ Reacts on webhooks of supported services. """
         for header, value in request.headers.items():
             header_ = header.lower()
             if header_.startswith('x-') and header_.endswith('-event'):
@@ -695,10 +653,8 @@ def create_app(config=None):
                     # process the request with webhook method of the service
                     if service.name == source:
                         res = service.webhook(request, app.config['cfg'])
-                        return res 
+                        return res
                 
-                break
-        
         # If there is not 'x-*****-event' header
         response = app.response_class(
                     response=json.dumps({"error": "Service is not supported."}),
@@ -710,6 +666,7 @@ def create_app(config=None):
 
     @app.route('/config', methods=['POST'])
     def save_config():
+        """ Saves current configuration, obtained from web interface locally. """
         config = configparser.ConfigParser()
 
         # Save services settings
@@ -728,7 +685,7 @@ def create_app(config=None):
         
         # with open(ENVVAR_CONFIG, 'w') as config_file:
         # 'test.cfg'
-        with open('labels_conf.cfg', 'w') as config_file:
+        with open(LOCAL_LABELS_CONF_SOURCE, 'w') as config_file:
             config.write(config_file)
         
         # return '200'
@@ -740,6 +697,7 @@ def create_app(config=None):
 
     @app.route('/repos', methods=['GET', 'POST'])
     def repos():
+        """ Management of available repositories """
         if request.method == 'GET':
             service_name = request.args.get('service')
             services_ = app.config['services']
@@ -771,38 +729,37 @@ def create_app(config=None):
 
             return redirect(url_for('index'))
 
-    @app.route('/check', methods=['GET', 'POST'])
-    def check_l():
-        if request.method == 'GET':
-            enabled_ = {}
-            services_ = app.config['services']
-            for service_ in services_:
-                repos = []
-                for repo, enabled in service_.repos.items():
-                    if enabled:
-                        repos.append(repo)
-                if repos:
-                    enabled_[service_.name] = repos
+    # @app.route('/check', methods=['GET', 'POST'])
+    # def check_l():
+    #     if request.method == 'GET':
+    #         enabled_ = {}
+    #         services_ = app.config['services']
+    #         for service_ in services_:
+    #             repos = []
+    #             for repo, enabled in service_.repos.items():
+    #                 if enabled:
+    #                     repos.append(repo)
+    #             if repos:
+    #                 enabled_[service_.name] = repos
             
-            print(enabled_)
-            return render_template(
-                'check_labels.html',
-                services = enabled_# app.config['services']
-            )
-        else:
-            check_labels_async_wrapper(app.config)
-            # return '200'
-            response = app.response_class(
-                        response='OK',
-                        status=200
-                    )
-            return response
+    #         print(enabled_)
+    #         return render_template(
+    #             'check_labels.html',
+    #             services = enabled_# app.config['services']
+    #         )
+    #     else:
+    #         check_labels_async_wrapper(app.config)
+    #         # return '200'
+    #         response = app.response_class(
+    #                     response='OK',
+    #                     status=200
+    #                 )
+    #         return response
 
     @app.route('/check/labels', methods=['GET', 'POST'])
     def check_labels():
         if request.method == 'GET':
             check_results = check_labels_async_wrapper(app.config)
-            # print(check_results)
             data = {}
             for result in check_results:
                 service, repos = result
@@ -818,7 +775,6 @@ def create_app(config=None):
             return jsonify(data)
         else:
             fix_results = fix_labels_async_wrapper(app.config)
-            # print(check_results)
             data = {}
             for result in fix_results:
                 service, repos = result
@@ -832,69 +788,31 @@ def create_app(config=None):
             print(data)
             return jsonify(data)
       
-    import time
-    @app.route('/test', methods=['GET'])
-    def test_async():
-        #code block
-        async def download_site(session, url):
-            async with session.get(url) as response:
-                print("Read {0} from {1}".format(response.content_length, url))
+    # import time
+    # @app.route('/test', methods=['GET'])
+    # def test_async():
+    #     #code block
+    #     async def download_site(session, url):
+    #         async with session.get(url) as response:
+    #             print("Read {0} from {1}".format(response.content_length, url))
 
 
-        async def download_all_sites(sites):
-            async with aiohttp.ClientSession() as session:
-                tasks = []
-                for url in sites:
-                    task = asyncio.ensure_future(download_site(session, url))
-                    tasks.append(task)
-                await asyncio.gather(*tasks, return_exceptions=True)
+    #     async def download_all_sites(sites):
+    #         async with aiohttp.ClientSession() as session:
+    #             tasks = []
+    #             for url in sites:
+    #                 task = asyncio.ensure_future(download_site(session, url))
+    #                 tasks.append(task)
+    #             await asyncio.gather(*tasks, return_exceptions=True)
 
-        sites = ["https://www.jython.org","http://olympus.realpython.org/dice"]*20
-        start_time = time.time()
-        asyncio.set_event_loop(asyncio.SelectorEventLoop())
-        asyncio.get_event_loop().run_until_complete(download_all_sites(sites))
-        duration = time.time() - start_time
-        return jsonify({"status":f"Downloaded {len(sites)} sites in {duration} seconds"})
+    #     sites = ["https://www.jython.org","http://olympus.realpython.org/dice"]*20
+    #     start_time = time.time()
+    #     asyncio.set_event_loop(asyncio.SelectorEventLoop())
+    #     asyncio.get_event_loop().run_until_complete(download_all_sites(sites))
+    #     duration = time.time() - start_time
+    #     return jsonify({"status":f"Downloaded {len(sites)} sites in {duration} seconds"})
         #end of code block
     
     
     
     return app
-
-
-# if __name__ == "__main__":
-#     services, config = load_app('credentials_conf.cfg')
-#     # github = services.services[0]
-#     # repos = github.repos
-#     # label = Label('my_test_label', '#ffbf00', 'This is my first test label')
-#     # for repo, enabled in repos.items():
-#     #     if enabled:
-#     #         github.connector.get_labels(repo)
-#     #         _, j = github.connector.create_label(repo,  label)
-            
-#     #         label.name = 'changed_name'
-#     #         label.description = 'Changed description.'
-#     #         s, j = github.connector.update_label(repo, label)
-#     #         # s, j = github.connector.remove_label(repo, label)
-#     # print(s, j)
-#     async def _solve_tasks():
-#         tasks = []
-#         for service in services:
-#             task = asyncio.ensure_future(service.check_all(config.labels_rules))
-#             tasks.append(task)
-
-#         result = await asyncio.gather(return_exceptions=True, *tasks)
-
-#         tasks = []
-#         for service in services:
-#             task = asyncio.ensure_future(service.fix_all(config.labels_rules, result[0]))
-#             tasks.append(task)
-
-#         result = await asyncio.gather(return_exceptions=True, *tasks)
-#         from pprint import pprint
-#         pprint(result)
-
-
-#     loop = asyncio.get_event_loop()
-#     loop.run_until_complete(_solve_tasks())
-#     loop.close()

@@ -4,8 +4,11 @@ __pycache__
 .vscode
 .pypirc
 dist
+tests/fixtures/credentials_config/basic_success.cfg
+tests/fixtures/labels_config/basic.cfg
 credentials_conf.cfg
 labels_conf.cfg
 labels_conf (copy).cfg
+labels_conf (another copy).cfg
 test.cfg
 labelatory.egg-info

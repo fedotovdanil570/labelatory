@@ -26,6 +26,10 @@ setup(
         'labelatory': ['templates/*.html'],
     },
     install_requires=['aiohttp', 'requests', 'Flask'],
+    tests_require=[
+        'pytest',
+        'flexmock',
+    ],
     entry_points={
         'console_scripts': [
             'labelatory = labelatory.labelatory:create_app',

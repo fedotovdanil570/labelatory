@@ -57,7 +57,7 @@ User can change these preferences at his own discretion - customize already defi
 
 Adding support for a new service is provided with implementing the interface for comunnication with git service according to API documentation of the new service.
 
-User can save his customized preferences to configuration file.
+User can save his customized preferences to local configuration file.
 
 ## Configuration file example
 Credentials cofiguration file is stored locally and contains data for accessing the services and defines, where the label configuration file is stored. 
@@ -80,8 +80,8 @@ secret = <GITLAB_WEBHOOK_SECRET>
 
 * config - defines, where the label configuration file is stored.
   - type (required) - can be "local" or "remote"
-  - repo (required for "remote" type) - defines a repo on github, where the label configuration file is stored.
-  - secret (required for "remote" type) - defines a webhook secret for repo.
+  - repo (required for "remote" type) - defines a repo on github, where the label configuration file is stored 
+  (confuration file must have name "labels_conf.cfg" and be stored in the root of the repository).
 * service.<service_name> (e.g. service.github) - contains "token" for communication with API of the service and "secret" for work with webhooks.
   - token - access token.
   - secret - defines a webhook secret for repo.

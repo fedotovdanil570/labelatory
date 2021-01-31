@@ -729,7 +729,8 @@ def create_app(config=None):
             config.set(section_name, 'description', label.description)
         
         # with open(ENVVAR_CONFIG, 'w') as config_file:
-        with open('test.cfg', 'w') as config_file:
+        # 'test.cfg'
+        with open('labels_conf.cfg', 'w') as config_file:
             config.write(config_file)
         
         # return '200'

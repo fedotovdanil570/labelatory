@@ -2,6 +2,7 @@ __venv__
 __venv2__
 __pycache__
 .vscode
+.pypirc
 dist
 credentials_conf.cfg
 labels_conf.cfg

@@ -482,9 +482,9 @@ def fix_labels_async_wrapper(cfg):
     return results
 
 def check_labels_async_wrapper(cfg):
+    """ Checks labels if they conform the rules. """
     services = cfg['services']
     labels_rules = cfg['cfg']
-    from pprint import pprint
     async def _solve_tasks():
         tasks = []
         for service in services:
@@ -492,19 +492,8 @@ def check_labels_async_wrapper(cfg):
             tasks.append(task)
 
         results = await asyncio.gather(return_exceptions=True, *tasks)
-        # pprint(results)
         return results
 
-        # tasks = []
-        # for result in results:
-        #     service, checked_repos = result
-        #     if checked_repos:
-        #         task = asyncio.ensure_future(service.fix_all(labels_rules, checked_repos))
-        #         tasks.append(task)
-        # print(tasks)
-
-        # results = await asyncio.gather(return_exceptions=True, *tasks)
-        # pprint(results)
 
     asyncio.set_event_loop(asyncio.SelectorEventLoop())
     loop = asyncio.get_event_loop()
@@ -513,7 +502,7 @@ def check_labels_async_wrapper(cfg):
     return results
 
 def get_repos_for_service_async_wrapper(service):
-
+    """ Retrieves available repositories for given service. """
     asyncio.set_event_loop(asyncio.SelectorEventLoop())
     loop = asyncio.get_event_loop()
     repos = asyncio.ensure_future(service.connector.get_repos())
@@ -524,14 +513,12 @@ def get_repos_for_service_async_wrapper(service):
 
 ENVVAR_CONFIG = 'LABELATORY_CONFIG'
 def load_web(app):
+    """ Loads web application. """
     if ENVVAR_CONFIG not in os.environ:
         app.logger.critical(f'Config not supplied by envvar {ENVVAR_CONFIG}')
         exit(1)
     config_file_path = os.environ[ENVVAR_CONFIG]
     return load_app(config_file_path)
-
-def main():
-    print('Hello!')
 
 def create_app(config=None):
     app = Flask(__name__)

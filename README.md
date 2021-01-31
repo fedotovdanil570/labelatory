@@ -28,8 +28,9 @@ flask run
 It is recommenden to use ```ngrok```  or another similar program to make Labelatory be able to process webhooks events from your repositories.
 
 ## Screenshots
+The application after launch
 <p>
-  <img src=".screenshot/index.png">
+  <img src="screenshot/index.png" width="800" height="400">
 </p>
 
 ## Core functionality

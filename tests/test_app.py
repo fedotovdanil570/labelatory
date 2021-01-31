@@ -5,8 +5,8 @@ import importlib
 from helper import env, credentials_config, labels_config
 
 
-credentials_config_env = credentials_config('basic_success.cfg')
-labels_config_env = labels_config('basic.cfg')
+credentials_config_env = credentials_config('app.cfg')
+labels_config_env = labels_config('app_labels.cfg')
 
 
 def _import_app():

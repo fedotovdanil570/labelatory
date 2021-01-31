@@ -4,8 +4,8 @@ __pycache__
 .vscode
 .pypirc
 dist
-tests/fixtures/credentials_config/basic_success.cfg
-tests/fixtures/labels_config/basic.cfg
+tests/fixtures/credentials_config/app.cfg
+tests/fixtures/labels_config/app_labels.cfg
 credentials_conf.cfg
 labels_conf.cfg
 labels_conf (copy).cfg

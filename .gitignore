@@ -1,7 +1,10 @@
 __venv__
+__venv2__
 __pycache__
 .vscode
+dist
 credentials_conf.cfg
 labels_conf.cfg
 labels_conf (copy).cfg
 test.cfg
+labelatory.egg-info

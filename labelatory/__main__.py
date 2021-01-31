@@ -1,3 +1,3 @@
-from .debug import main
+from .labelatory import create_app
 
-main()
+create_app()

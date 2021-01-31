@@ -594,6 +594,7 @@ def create_app(config=None):
         cfg_[key] = cfg.labels_rules[key]
     app.config['cfg'] = cfg_
     app.config['services'] = services
+    app.config['cfg_secret'] = cfg.source_secrete
 
     app.logger.info('Labelatory is completely loaded now.')
 
@@ -831,7 +832,7 @@ def create_app(config=None):
 
             print(data)
             return jsonify(data)
-    
+      
     import time
     @app.route('/test', methods=['GET'])
     def test_async():

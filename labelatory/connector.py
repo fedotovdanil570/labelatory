@@ -185,7 +185,7 @@ class GitLabConnector(DefaultConnector):
 
     async def get_repos(self):
         URL = f'https://{self.host}/api/v4/projects'
-        payload = {'per_page':100}
+        payload = {'per_page':100, 'membership':True}
 
         # Get first page of repositories synchronously
         headers = {
@@ -197,7 +197,7 @@ class GitLabConnector(DefaultConnector):
             raise Exception(resp.text)
         page = resp.json()
         if not resp.links.get('next'):
-            return [repo['full_name'] for repo in page]
+            return [repo['path_with_namespace'] for repo in page]
         
         # If there are more pages, get them in ansynchronous manner
         while resp.links.get('next'):

@@ -3,7 +3,6 @@ __venv2__
 __pycache__
 .vscode
 .pypirc
-dist
 tests/fixtures/credentials_config/app.cfg
 tests/fixtures/labels_config/app_labels.cfg
 credentials_conf.cfg
